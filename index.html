@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} img{max-width:100%} [hidden]{display:none!important}</style>
+</head>
+<body>
+<title>카드폴리오</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Gowun+Batang:wght@400;700&display=swap">
+<style>
+/* 레이아웃: 모바일 1열, 상단 질문 입력 → 카드 응답 리스트 → 하단 탭(조회 / 실적 / 이번달 / 카드) */
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --fg:#1d2126; --muted:#6b7079; --line:#e1dfd9;
+  --accent:#2f5d8a; --accent-soft:#e6eef7;
+  --good:#237a4b; --good-soft:#e3f3e9; --warn:#a2650c; --warn-soft:#fbefd9; --bad:#b3362e; --bad-soft:#fae4e2;
+  --display:"Gowun Batang",ui-serif,Georgia,serif;
+  --body:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15181c; --panel:#1e2228; --fg:#ecebe6; --muted:#9aa0a8; --line:#2e333a;
+  --accent:#7fa9d6; --accent-soft:#223243;
+  --good:#6fcb93; --good-soft:#1c3327; --warn:#e3b35e; --warn-soft:#3a2d16; --bad:#ef8a82; --bad-soft:#3d2321; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#15181c; --panel:#1e2228; --fg:#ecebe6; --muted:#9aa0a8; --line:#2e333a;
+  --accent:#7fa9d6; --accent-soft:#223243;
+  --good:#6fcb93; --good-soft:#1c3327; --warn:#e3b35e; --warn-soft:#3a2d16; --bad:#ef8a82; --bad-soft:#3d2321; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:680px;margin:0 auto;padding-block:20px 96px;padding-inline:16px}
+h1{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+h2{font-family:var(--display);font-size:19px;margin:28px 0 10px;text-wrap:balance}
+h3{font-size:15px;margin:0;font-weight:600}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+button,input{font:inherit;color:inherit}
+input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:16px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer}
+.chip:hover,.chip:focus-visible{border-color:var(--accent);outline:none}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card.top{border-color:var(--accent)}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rate{font-family:var(--display);font-size:22px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.issuer{color:var(--muted);font-size:12px;margin-left:6px;font-weight:400}
+.line{margin-top:6px;font-size:14px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.tag.good{background:var(--good-soft);color:var(--good)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.muted{color:var(--muted);font-size:13px}
+a.doc{font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+a.doc:hover{border-color:var(--accent)}
+.links{display:flex;flex-wrap:wrap;gap:6px}
+.links a{font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+details[hidden]{display:none}
+.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;margin-top:10px}
+.cell{border-top:1px solid var(--line);padding-top:8px;min-width:0}
+.cell .eyebrow{display:block;margin-bottom:2px}
+.cell .v{font-weight:600;font-size:15px}
+.cell .v.good{color:var(--good)}.cell .v.bad{color:var(--bad)}.cell .v.muted{font-weight:500}
+.cell .d{font-size:12px;color:var(--muted);margin-top:2px}
+.cell .alt{margin-top:6px;padding:6px 8px;background:var(--accent-soft);color:var(--fg);border-radius:6px;font-size:12px}
+.tips{background:var(--panel);border:1px dashed var(--accent);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:13px}
+.tips .eyebrow{color:var(--accent)}
+.tips ul{margin:6px 0 0;padding-left:18px}
+.tips li{margin:3px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
+.seg button{background:var(--panel);border:0;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.empty{color:var(--muted);padding:24px 0;text-align:center}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);font-weight:500}
+th{font-weight:600;font-size:12px;color:var(--muted)}
+tr:last-child td{border-bottom:none}
+.ok{color:var(--good);font-weight:600}.no{color:var(--bad);font-weight:600}.so{color:var(--warn);font-weight:600}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:none}
+.check input[type=checkbox]{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.check label{flex:1;cursor:pointer}
+.check.done label{color:var(--muted);text-decoration:line-through}
+.dday{font-variant-numeric:tabular-nums;font-weight:600}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 16px;margin-bottom:10px}
+summary{padding:14px 0;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:baseline;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary .meta{color:var(--muted);font-size:12px;white-space:nowrap}
+.body{padding-bottom:14px;font-size:14px}
+.body dl{margin:0;display:grid;grid-template-columns:72px 1fr;gap:6px 10px}
+.body dt{color:var(--muted);font-size:12px;padding-top:2px}
+.body dd{margin:0}
+.body ul{margin:4px 0 0;padding-left:18px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:1;background:none;border:0;border-radius:8px;padding:8px 4px;font-size:12px;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--accent);background:var(--accent-soft);font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--accent)}
+section[hidden]{display:none}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
+.kpi .card{padding:12px 14px}
+.kpi .v{font-family:var(--display);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">결제 전 10초</div>
+    <h1>카드폴리오</h1>
+    <div class="sub" id="today"></div>
+  </header>
+
+  <section id="tab-ask">
+    <h2>어디서 얼마?</h2>
+    <input id="q" type="search" placeholder="예: 스타벅스 1.2만 / 네이버페이 3만 / 주유 7만 / 관리비" autocomplete="off" enterkeyhint="search" inputmode="text">
+    <div class="chips" id="chips"></div>
+    <div id="tips"></div>
+    <div class="seg" role="group" aria-label="정렬"><button type="button" data-sort="benefit" aria-pressed="true">혜택 많은 순</button><button type="button" data-sort="perf" aria-pressed="false">실적 채우기 순</button></div>
+    <div id="answer" class="list"></div>
+  </section>
+
+  <section id="tab-perf" hidden>
+    <h2>① 실적 인정 — 이 결제가 전월실적에 들어가나</h2>
+    <p class="muted">실적만 채우려는 결제는 ✓인 카드로. 적립·할인이 붙는지는 아래 ②표가 따로 말함.</p>
+    <div class="tablewrap"><table id="perfTable"></table></div>
+    <h2>② 혜택(적립·할인) 제외 — 결제해도 적립·할인이 안 붙는 항목</h2>
+    <p class="muted">✗는 실적엔 들어가더라도 포인트·캐시백은 0. 무실적 카드(톡마포)는 이 표만 중요.</p>
+    <div class="tablewrap"><table id="rewardTable"></table></div>
+    <h2>월 실적 기준과 구간</h2>
+    <div class="tablewrap"><table id="tierTable"></table></div>
+  </section>
+
+  <section id="tab-month" hidden>
+    <h2 id="monthTitle">이번 달 체크</h2>
+    <div class="kpi" id="kpi"></div>
+    <h2>이번 달 작전 — 어디에 얼마만 쓰면 되나</h2>
+    <p class="muted">규칙에서 자동으로 나오는 월 목표. 이 숫자만 넘기면 혜택은 다 받음.</p>
+    <div class="tablewrap"><table id="planTable"></table></div>
+    <div class="note" id="planNote"></div>
+    <h2>진행 중 이벤트</h2>
+    <p class="muted">응모형은 응모 후 체크. 마감 7일 전부터 주황색. 조회 결과에도 태그로 뜸.</p>
+    <div id="events"></div>
+    <h2>체크리스트</h2>
+    <p class="muted">한도 소진·실적 충족을 체크하면 <b>조회 결과에서 그 혜택이 빠지고</b> 다음 카드가 올라옴.</p>
+    <div class="card" id="checks"></div>
+    <p class="muted" style="margin-top:10px">체크는 이 폰 브라우저에만 저장되고 매달 1일 비워짐.</p>
+  </section>
+
+  <section id="tab-cards" hidden>
+    <h2>보유 카드 규칙</h2>
+    <input id="cardq" type="search" placeholder="카드 규칙 안에서 찾기: 상품권, 관리비, 주차…" autocomplete="off" style="margin-bottom:10px">
+    <div id="cards"></div>
+    <div class="note">실적·한도는 카드사 공시 기준으로 정리한 1차본. "확인" 표시는 공식 약관으로 다시 봐야 하는 항목.</div>
+  </section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="ask">조회</button>
+  <button role="tab" aria-selected="false" data-tab="perf">기준표</button>
+  <button role="tab" aria-selected="false" data-tab="month">이번 달</button>
+  <button role="tab" aria-selected="false" data-tab="cards">카드</button>
+</nav>
+
+<script>
+// ───────── 카테고리 사전 (검색어 → 카테고리) ─────────
+const CATS = {
+  coffee:  {label:'커피', gen:['커피','카페'], al:['커피','카페','스타벅스','스벅','투썸','커피빈','메가','빽다방','컴포즈','할리스','엔제리너스','엔젤','이디야','폴바셋']},
+  naverpay:{label:'네이버페이', al:['네이버페이','네페','npay','naver']},
+  kakaopay:{label:'카카오페이', al:['카카오페이','카페이','kakaopay']},
+  payco:   {label:'페이코', al:['페이코','payco']},
+  tosspay: {label:'토스페이', al:['토스페이','토스']},
+  otherpay:{label:'간편결제(SSG·11pay·스마일)', al:['ssg페이','ssgpay','11pay','스마일페이']},
+  kbpay:   {label:'KB Pay', al:['kb pay','kbpay','케비페이','kb페이']},
+  samsungpay:{label:'삼성페이', al:['삼성페이','samsung pay']},
+  online:  {label:'온라인쇼핑', gen:['온라인쇼핑','온라인'], al:['쿠팡','무신사','지그재그','w컨셉','에이블리','온라인쇼핑','온라인','11번가','지마켓','네이버쇼핑','ssg']},
+  transit: {label:'대중교통', al:['대중교통','버스','지하철','교통','후불교통']},
+  fuel:    {label:'주유', al:['주유','기름','주유소','휘발유','경유','lpg','충전소']},
+  parking: {label:'주차', al:['주차','주차장']},
+  telecom: {label:'통신요금', al:['통신','통신비','통신요금','skt','휴대폰요금','폰요금']},
+  movie:   {label:'영화', gen:['영화','영화관'], al:['영화','영화관','cgv','롯데시네마','메가박스']},
+  dining:  {label:'외식(패밀리레스토랑)', gen:['외식','패밀리레스토랑','레스토랑'], al:['외식','vips','빕스','tgif','아웃백','애슐리','패밀리레스토랑','레스토랑']},
+  park:    {label:'놀이공원', al:['놀이공원','에버랜드','롯데월드','서울랜드','이월드']},
+  ott:     {label:'OTT·디지털', al:['ott','넷플릭스','유튜브','유튜브프리미엄','왓챠','멜론','디즈니','웨이브','티빙','스포티파이','디지털멤버십','쿠팡플레이']},
+  delivery:{label:'배달앱', al:['배달','배민','배달의민족','요기요','쿠팡이츠']},
+  dept:    {label:'백화점', al:['백화점','롯데백화점','현대백화점','신세계']},
+  cvs:     {label:'편의점', al:['편의점','gs25','cu','세븐일레븐','이마트24']},
+  mgmt:    {label:'아파트관리비', al:['관리비','아파트관리비']},
+  utility: {label:'공과금(전기·가스·수도)', al:['공과금','전기','전기요금','가스','도시가스','수도','수도요금']},
+  tax:     {label:'세금(국세·지방세)', al:['세금','국세','지방세','재산세','자동차세','취득세','관세']},
+  insurance:{label:'4대보험', al:['4대보험','건강보험','국민연금','고용보험']},
+  voucher: {label:'상품권·기프트카드 구매', al:['상품권','기프트카드','기프티콘','문화상품권','컬쳐랜드','해피머니','북앤라이프']},
+  prepaid: {label:'선불충전(페이머니·교통 등)', al:['선불','충전','하나머니','네이버페이충전','카카오페이충전','토스충전','티머니충전','페이머니']},
+  overseas:{label:'해외결제', al:['해외','달러','아마존','알리','해외직구']},
+  tuition: {label:'학교납입금·등록금', al:['등록금','학교','학원','납입금','스쿨뱅킹']},
+  rent:    {label:'부동산 임대료', al:['임대료','월세']},
+  installment:{label:'할부', al:['할부','무이자','무이자할부']},
+  general: {label:'일반 가맹점', al:['일반','마트','식당','편집','기타','아무데나','전가맹점']},
+};
+const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
+
+// ───────── 카드 규칙 DB ─────────
+// perfExclude: 실적제외 카테고리 / rewardExclude: 혜택(적립·할인)제외 카테고리
+// benefits[].min: 건당 최소금액, cap: 월 한도(원), rate: 비율(0.2=20%) 또는 fn
+const CARDS = [
+  {
+    id:'mgs', links:[['상품안내(하나)','https://m.hanacard.co.kr/MGINTROM.web?CD_PD_SEQ=18590'],['상품설명서 PDF','https://qpay.hanacard.co.kr/leaflet/15/15417_20250616.pdf'],['나무위키 정리','https://namu.wiki/w/MG+%20S%20%ED%95%98%EB%82%98%EC%B9%B4%EB%93%9C']], name:'MG+S 하나카드', short:'MG+S', issuer:'하나(MG)', kind:'신용',
+    tiers:[[300000,'통합 1.5만'],[600000,'통합 3만'],[1000000,'통합 6만']],
+    perfNote:'할인받은 금액도 실적 포함. 일부 정리글에 "실적 절반(15만)은 간편결제, 절반은 비간편결제" 조건이 있으나 공식 설명서엔 없음(확인).',
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid','rent'],
+    rewardExclude:['installment','tax','utility','mgmt','insurance','tuition','voucher','prepaid','rent'],
+    benefits:[
+      {cats:PAY_CATS, rate:0.10, min:10000, cap:null, label:'간편결제 10% 청구할인', cond:'건당 1만원↑ · 통합한도 내 · 네이버/카카오/토스/SSG/11pay/스마일페이'},
+      {cats:['ott'], rate:0.50, min:0, cap:null, label:'OTT·디지털멤버십 50%', cond:'통합한도 내'},
+    ],
+    cautions:['통합할인한도는 전월실적 구간에 따름(1.5만/3만/6만)','삼성페이 단독 결제는 간편결제 할인 대상 아님(설명서 기준: 네이버·카카오·토스·SSG·11pay·스마일페이만)'],
+  },
+  {
+    id:'more1', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한은행 더모아 · 26.12 만료', short:'은행 더모아', issuer:'신한', kind:'신용', expires:'2026-12-31',
+    tiers:[[300000,'적립 제공']],
+    perfNote:'전월 30만 조건(확인). 5,000원 이상 결제만, 동일 가맹점 하루 1회.',
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid'],
+    rewardExclude:['voucher','prepaid'],
+    benefits:[
+      {cats:['delivery','ott','dept','overseas','installment'], rate:'more2', min:5000, cap:null, label:'잔돈(1천원 미만) ×2 적립', cond:'5천원↑ · 배달앱/디지털콘텐츠/백화점(입점·온라인 제외)/해외/할부(무이자 제외) · 네이버페이로 결제하면 일반적립'},
+      {cats:['general','coffee','online','cvs','dining','movie','fuel','park','kakaopay','naverpay','payco','tosspay','otherpay','samsungpay','transit','telecom'], rate:'more1', min:5000, cap:null, label:'잔돈(1천원 미만) 적립', cond:'5천원↑ · 같은 가맹점 하루 1회 · 끝자리 999에 가까울수록 유리'},
+    ],
+    cautions:['통신 특별적립은 통신요금 자동이체가 더모아에 걸려 있을 때만 — 현재 타 카드에 걸려 있어 해당 없음','선불충전·상품권은 PG 경유여도 적립 제외, 사후 회수 가능'],
+  },
+  {
+    id:'more2', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한금투 더모아 · 27.1 만료', short:'금투 더모아', issuer:'신한', kind:'신용', expires:'2027-01-31',
+    tiers:[[300000,'적립 제공']],
+    perfNote:'은행 더모아와 동일 규칙. 두 장은 별개 카드라 각자 실적·하루 1회 카운트.',
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid'],
+    rewardExclude:['voucher','prepaid'],
+    benefits:[
+      {cats:['delivery','ott','dept','overseas','installment'], rate:'more2', min:5000, cap:null, label:'잔돈 ×2 적립', cond:'5천원↑ · 특별가맹점'},
+      {cats:['general','coffee','online','cvs','dining','movie','fuel','park','kakaopay','naverpay','payco','tosspay','otherpay','samsungpay','transit','telecom'], rate:'more1', min:5000, cap:null, label:'잔돈 적립', cond:'5천원↑ · 같은 가맹점 하루 1회'},
+    ],
+    cautions:['은행 더모아가 만료되면 특별가맹점 하루 1회 카운트가 이 카드 한 장으로 줄어듦'],
+  },
+  {
+    id:'rpm', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1188292_2207.html'],['무료주차장 목록','https://pprain.com/43']], name:'신한 RPM Platinum# (구RPM)', short:'구RPM', issuer:'신한', kind:'신용',
+    tiers:[[0,'주유·주차 무실적'],[500000,'특별적립 1%'],[1000000,'특별적립 3%'],[1500000,'특별적립 5%']],
+    perfNote:'주유 적립은 무실적. 무료주차는 전월에 이 카드로 1건 이상 결제해야 제공. 실적제외가 현금서비스·카드론·연회비·수수료·이자·선불카드 충전뿐 — 상품권 구매·세금·공과금·관리비는 실적 인정(옛 약관).',
+    perfExclude:['prepaid'],
+    rewardExclude:['installment','prepaid'],
+    benefits:[
+      {cats:['fuel'], rate:'fuel', min:0, cap:300000, label:'주유 ℓ당 100P (LPG 30P)', cond:'주유·충전 통합 월 4회, 30만원까지'},
+      {cats:['parking'], rate:0, min:0, cap:null, label:'지정 주차장 무료 월 3회', cond:'일 1회 · 전월 1건 이상 이용 필요 · AMEX는 30만'},
+    ],
+    cautions:['주유 외 일반적립 0.2~2%는 다른 카드가 더 유리','적립 제외: 무이자·슬림할부, 지방세, 수도요금, 선불충전, 할인서비스 적용 금액 (국세는 적립 가능)'],
+  },
+  {
+    id:'naeun', links:[['상품안내(새마을금고)','https://mgcheck.kfcc.co.kr/pers/appl/persTheNaeunGuid.do']], name:'MG 더나은 체크카드', short:'더나은', issuer:'새마을금고', kind:'체크',
+    tiers:[[300000,'영역별 6천 ×3']],
+    perfNote:'실적제외가 해외·소액신용결제(후불교통)뿐. 관리비·공과금·통신·상품권·세금도 실적 인정. 캐시백 받은 건도 실적 포함.',
+    perfExclude:['overseas','transit'],
+    rewardExclude:[],
+    benefits:[
+      {cats:['naverpay','kakaopay','payco'], rate:0.20, min:10000, cap:6000, label:'간편결제 20% 캐시백', cond:'건당 1만원↑ · 월 6천 · 네이버/카카오/페이코'},
+      {cats:['online'], brands:['쿠팡','무신사','지그재그','w컨셉','에이블리'], rate:0.20, min:10000, cap:6000, label:'온라인쇼핑 20% 캐시백', cond:'건당 1만원↑ · 월 6천 · 쿠팡/무신사/지그재그/W컨셉/에이블리 · 온라인만'},
+      {cats:['coffee'], brands:['스타벅스','스벅','투썸','커피빈','메가','빽다방','컴포즈'], rate:0.20, min:5000, cap:6000, label:'커피 20% 캐시백', cond:'건당 5천원↑ · 월 6천 · 스타벅스/투썸/커피빈/메가/빽다방/컴포즈 · 사이렌오더 포함'},
+    ],
+    cautions:['영역별 한도가 독립이라 3영역 각각 6천까지 먹을 것','비대면 신규발급 중단 — 재발급·유효기간 챙기기'],
+  },
+  {
+    id:'tok', links:[['카드고릴라 상세','https://m.card-gorilla.com/card/detail/2377'],['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000092'],['KB국민카드 상품안내','https://card.kbcard.com/CXPRICAC0076.cms?mainCC=a&cooperationcode=09272']], name:'KB국민 톡톡 my point', short:'톡마포', issuer:'KB국민', kind:'신용',
+    tiers:[[0,'무실적']],
+    perfNote:'무실적. KB Pay 월 20만원이 5% 적립 효율 최대(한도 1만점). KB Pay 연 300만 넘기면 12,000점 추가.',
+    perfExclude:[],
+    rewardExclude:['tax','mgmt','tuition','voucher','prepaid','insurance','utility'],
+    benefits:[
+      {cats:['kbpay'], rate:0.055, min:0, cap:10000, label:'KB Pay 5% + 기본 0.5%', cond:'5% 부분 월 1만점 한도(=KB Pay 20만원)'},
+      {cats:['general','coffee','online','cvs','dining','movie','fuel','park','dept','delivery','ott','overseas','telecom','transit','samsungpay','naverpay','kakaopay','payco','tosspay','otherpay','installment','parking'], rate:0.005, min:0, cap:null, label:'전가맹점 0.5% 적립', cond:'실적·한도 없음'},
+    ],
+    cautions:['오프라인은 KB Pay(삼성페이 되는 곳) 결제여야 5%','연 300만 리워드는 발급월 기준 1년 집계'],
+  },
+  {
+    id:'nara', links:[['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000108'],['KB 제휴혜택 안내','https://m.kbcard.com/CXHIABNC0026.cms?evntSerno=269162'],['나무위키 나라사랑카드/2기','https://namu.wiki/w/%EB%82%98%EB%9D%BC%EC%82%AC%EB%9E%91%EC%B9%B4%EB%93%9C/2%EA%B8%B0']], name:'KB국민 나라사랑카드(체크)', short:'나사카', issuer:'KB국민', kind:'체크',
+    tiers:[[100000,'통합 5천'],[200000,'통합 1만'],[300000,'통합 2만'],[500000,'통합 3만'],[1000000,'통합 5만']],
+    perfNote:'대중교통 이용금액은 실적에 안 들어감. 해외·정부지원도 제외. 영역별 요구 실적(8만/20만/25만)은 확인 필요.',
+    perfExclude:['transit','overseas'],
+    rewardExclude:['tax','voucher','prepaid','mgmt'],
+    benefits:[
+      {cats:['transit'], rate:0.20, min:0, cap:null, label:'대중교통 20% 청구할인', cond:'통합한도 내 · 전월실적 20~25만 구간 확인'},
+      {cats:['coffee'], brands:['스타벅스','스벅'], rate:0.20, min:0, cap:null, label:'스타벅스 20%', cond:'스타벅스만 · 통합한도 내'},
+      {cats:['movie'], brands:['cgv'], rate:0.35, min:0, cap:null, label:'CGV 35%', cond:'통합한도 내'},
+      {cats:['dining'], rate:0.20, min:0, cap:null, label:'패밀리레스토랑 20%', cond:'통합한도 내'},
+      {cats:['park'], rate:0.50, min:0, cap:null, label:'놀이공원 50%', cond:'통합한도 내'},
+      {cats:['online'], rate:0.05, min:0, cap:null, label:'온라인쇼핑 5%', cond:'통합한도 내'},
+      {cats:['cvs'], rate:0.10, min:0, cap:null, label:'편의점 10%', cond:'전월 25만↑ 구간(확인)'},
+    ],
+    cautions:['통합할인한도라 교통 20%가 한도를 먼저 먹으면 스벅 할인이 안 나올 수 있음'],
+  },
+  {
+    id:'sktw', links:[['상품안내(우리)','https://nm.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=228028'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?exec=cardDetail&cardGdsNo=228028']], name:'SKT 우리카드', short:'SKT우리', issuer:'우리', kind:'신용',
+    tiers:[[300000,'통신 1만'],[700000,'통신 1.5만'],[1000000,'통신 2만']],
+    perfNote:'실적제외가 무이자할부·국세·지방세·관세·해외·카드대출·수수료·연회비뿐. 상품권·관리비·공과금 실적 인정. 현재 30만 구간(통신 1만)으로 운용.',
+    perfExclude:['installment','tax','overseas'],
+    rewardExclude:['installment'],
+    benefits:[
+      {cats:['telecom'], rate:'flat10000', min:0, cap:10000, label:'SKT 통신요금 1만 할인 (30만 구간)', cond:'SKT 자동이체 · 70만 1.5만 / 100만 2만'},
+      {cats:['coffee'], brands:['할리스','엔제리너스','엔젤'], rate:0.20, min:0, cap:5000, label:'할리스·엔제리너스 20%', cond:'건당 최대 5천 · 일 1회 · 월 2회 · 스타벅스 등 다른 브랜드는 대상 아님'},
+      {cats:['dining'], brands:['vips','빕스','tgif'], rate:0.10, min:0, cap:10000, label:'VIPS·TGIF 10%', cond:'건당 최대 1만 · 일 1회 · 월 2회'},
+      {cats:['movie'], rate:'flat3000', min:12000, cap:3000, label:'전국 영화관 3천원 할인', cond:'1.2만원↑ · 월 1회 · 연 10회'},
+      {cats:['park'], rate:0.50, min:0, cap:null, label:'놀이공원 50% 현장할인', cond:'월 1회 · 연 10회 · 본인'},
+    ],
+    cautions:['통신 1만 할인을 위해 매달 30만 실적만 넘기면 됨 — 실적제외가 거의 없어 채우기용으로 최적'],
+  },
+];
+
+// ───────── 이벤트 (월 1회 갱신: "이번 달 이벤트 뭐 있어?" → AI가 조사해 채움) ─────────
+// {id, card:카드id, title, start:'YYYY-MM-DD', end:'YYYY-MM-DD', apply:true=응모필요, cats:[해당 카테고리], cond:'조건', reward:'보상', url}
+const EVENTS = [
+];
+function activeEvents(){ const t=new Date(); t.setHours(0,0,0,0); return EVENTS.filter(e => new Date(e.start+'T00:00:00+09:00')<=t && new Date(e.end+'T23:59:59+09:00')>=t); }
+function evState(){ try{ return JSON.parse(localStorage.getItem('cf_ev')||'{}'); }catch(e){ return {}; } }
+function evSave(o){ try{ localStorage.setItem('cf_ev', JSON.stringify(o)); }catch(e){} }
+
+// ───────── 유틸 ─────────
+const won = n => n.toLocaleString('ko-KR') + '원';
+const $ = s => document.querySelector(s);
+function parseAmount(s){
+  // 1.2만 / 12000 / 1만2천 / 7만 / 3,500
+  let t = s.replace(/,/g,'');
+  let m = t.match(/(\d+(?:\.\d+)?)\s*만\s*(\d+)?\s*천?/);
+  if(m){ let v = parseFloat(m[1])*10000; if(m[2]) v += parseInt(m[2])*(/천/.test(m[0])?1000:1); return Math.round(v); }
+  m = t.match(/(\d+(?:\.\d+)?)\s*천/); if(m) return Math.round(parseFloat(m[1])*1000);
+  m = t.match(/(\d{3,})/); if(m) return parseInt(m[1]);
+  return null;
+}
+function detectCats(s){
+  const q = s.toLowerCase().replace(/\s+/g,'');
+  const hits = [];
+  for(const [k,c] of Object.entries(CATS)){
+    if(c.al.some(a => q.includes(a.toLowerCase().replace(/\s+/g,'')))) hits.push(k);
+  }
+  // "간편결제"·"페이"처럼 수단을 특정하지 않으면 간편결제 전체로 봄
+  if(!hits.some(k=>PAY_CATS.includes(k)||k==='kbpay'||k==='samsungpay') && /간편결제|간편|페이결제|^페이|페이로/.test(q)) hits.push(...PAY_CATS);
+  return hits;
+}
+function benefitValue(b, amount, cat){
+  if(amount==null) return null;
+  if(b.rate==='more1' || b.rate==='more2'){ if(amount<5000) return 0; const r = amount%1000; return b.rate==='more2'? r*2 : r; }
+  if(b.rate==='fuel'){ return Math.round(amount/1700*100); } // 휘발유 ℓ당 약 1,700원 가정
+  if(b.rate==='flat10000') return 10000;
+  if(b.rate==='flat3000') return 3000;
+  if(amount < b.min) return 0;
+  let v = Math.round(amount*b.rate);
+  if(b.cap) v = Math.min(v,b.cap);
+  return v;
+}
+
+// ───────── 조회 ─────────
+function answer(){
+  const raw = $('#q').value.trim();
+  const box = $('#answer');
+  if(!raw){ $('#tips').innerHTML=''; box.innerHTML = '<div class="empty">가맹점이나 결제수단, 금액을 적으면 카드별로 답합니다.</div>'; return; }
+  const amount = parseAmount(raw);
+  const qn = raw.toLowerCase().replace(/\s+/g,'');
+  let cats = detectCats(raw);
+  // 카테고리 안에서 브랜드를 특정했는지 (예: "스타벅스" vs 그냥 "커피")
+  const brandSpecified = {};
+  for(const k of cats){ const c=CATS[k]; if(c.gen){ brandSpecified[k] = c.al.some(a => !c.gen.includes(a) && qn.includes(a.toLowerCase().replace(/\s+/g,''))); } }
+  const brandOk = b => {
+    if(!b.brands) return true;
+    const k = b.cats.find(x=>cats.includes(x));
+    if(!brandSpecified[k]) return 'generic';
+    return b.brands.some(a => qn.includes(a.toLowerCase().replace(/\s+/g,'')));
+  };
+  if(!cats.length && amount!=null) cats = ['general'];
+  if(!cats.length){ box.innerHTML = '<div class="empty">아는 가맹점이 아니에요. 업종(커피, 주유, 마트…)으로 적어보세요.</div>'; return; }
+
+  const payLike = k => PAY_CATS.includes(k)||k==='kbpay'||k==='samsungpay';
+  const PAYABLE = ['coffee','online','delivery','cvs','dining','general','movie','ott','dept','fuel','park'];
+  const querySpecifiesPay = cats.some(payLike);
+  const merchantCats = cats.filter(k=>!payLike(k));
+  const canSuggestPay = !querySpecifiesPay && merchantCats.some(k=>PAYABLE.includes(k));
+  const payName = b => b.cats.includes('kbpay') ? 'KB Pay' : (b.cats.includes('payco') && !b.cats.includes('tosspay') ? '네이버·카카오·페이코' : '네이버·카카오·토스·SSG 등 간편결제');
+
+  const rows = [];
+  for(const c of CARDS){
+    const perfNo = cats.filter(k => c.perfExclude.includes(k));
+    const rewNo  = cats.filter(k => c.rewardExclude.includes(k));
+    const matched = c.benefits.filter(b => b.cats.some(k => cats.includes(k)) && !rewNo.length);
+    let best = null, bestVal = -1, warn = [], brandNote = null;
+    for(const b of matched){
+      if(isExhausted(c.id,b)){ warn.push(`${b.label} 이번 달 한도 소진(체크됨)`); continue; }
+      const ok = brandOk(b);
+      if(ok===false){ warn.push(`${b.label}는 대상 브랜드 아님`); continue; }
+      if(ok==='generic') brandNote = `대상: ${b.brands.join('·')}`;
+      const v = benefitValue(b, amount, cats);
+      if(amount!=null && b.min && amount<b.min) { warn.push(`건당 ${won(b.min)} 미만이라 ${b.label} 미적용`); continue; }
+      const score = v==null ? (typeof b.rate==='number'? b.rate*1e5 : 1) : v;
+      if(score>bestVal){ bestVal=score; best=b; }
+    }
+    // 조건부: 결제수단을 바꾸면 받을 수 있는 혜택 (예: 배달앱을 네이버페이로)
+    let cond = null, condVal = null;
+    if(canSuggestPay && !rewNo.length){
+      for(const b of c.benefits.filter(b => b.cats.some(payLike) && !b.cats.some(k=>merchantCats.includes(k)))){
+        if(c.id==='more1'||c.id==='more2') continue; // 더모아는 간편결제가 오히려 일반적립
+        if(isExhausted(c.id,b)) continue;
+        const v = benefitValue(b, amount, cats);
+        if(amount!=null && b.min && amount<b.min) continue;
+        const score = v==null ? b.rate*1e5 : v;
+        const cur = cond ? (condVal==null ? cond.rate*1e5 : condVal) : -1;
+        if(score>cur){ cond=b; condVal=v; }
+      }
+    }
+    const val = best? benefitValue(best, amount, cats): null;
+    const directScore = best ? (val ?? (typeof best.rate==='number'? best.rate*1e5 : 1)) : -1;
+    const condScore = cond ? (condVal ?? cond.rate*1e5) : -1;
+    rows.push({c, best, val, cond, condVal, potential: Math.max(directScore, condScore), perfNo, rewNo, warn, brandNote: best&&best.brands? brandNote : null});
+  }
+  rows.sort((a,b)=>{
+    const av = a.potential, bv = b.potential;
+    if(SORT==='perf'){ // 실적 채우기 순: 실적 인정 카드 먼저, 그 안에서 실적 조건이 있는 카드(채워야 하는 카드) 먼저, 그 다음 혜택
+      const ap = a.perfNo.length?1:0, bp = b.perfNo.length?1:0; if(ap!==bp) return ap-bp;
+      const an = a.c.tiers[0][0]>0?0:1, bn = b.c.tiers[0][0]>0?0:1; if(an!==bn) return an-bn;
+    }
+    if(bv!==av) return bv-av;
+    return a.perfNo.length - b.perfNo.length;
+  });
+
+  const allPay = PAY_CATS.every(k=>cats.includes(k));
+  const labels = allPay ? ['간편결제(전체)', ...cats.filter(k=>!PAY_CATS.includes(k)).map(k=>CATS[k].label)] : cats.map(k=>CATS[k].label);
+  const head = `<div class="muted">${labels.join(' · ')}${amount!=null? ' · '+won(amount):''}</div>`;
+  // 쪼개기·금액 조정 팁
+  const tips = [];
+  if(amount!=null){
+    // 더모아: 끝자리 999 / 두 장 분할
+    const mores = rows.filter(r => (r.c.id==='more1'||r.c.id==='more2') && !r.rewNo.length && r.c.benefits.some(b=>b.cats.some(k=>cats.includes(k))));
+    if(mores.length){
+      const mb = mores[0].c.benefits.find(b=>b.cats.some(k=>cats.includes(k)));
+      const mult = mb.rate==='more2'?2:1, rem=amount%1000;
+      if(amount<5000 && amount>=3000){
+        tips.push(`더모아: 5천 미만은 적립 0. <b>${won(5999-amount)}</b> 더 담아 5,999원으로 → ${won(999*mult)}`);
+      } else if(amount>=5000){
+        const up = (999-rem+1000)%1000;
+        if(rem!==999) tips.push(`더모아 한 장: ${up>0? '<b>'+won(up)+'</b> 더 담아 ':''}끝자리 999로 → ${won(999*mult)} (지금 ${won(rem*mult)})`);
+        if(mores.length>=2 && amount>=10999){
+          const d = (998 - rem + 1000)%1000; const x = 5999; const y = amount + d - x;
+          if(y>=5000) tips.push(`더모아 두 장: 은행 ${won(x)} + 금투 ${won(y)}${d? ' (<b>'+won(d)+'</b> 더 담기)':''} → <b>${won(1998*mult)}</b> · 같은 가맹점 하루 1회라 카드가 달라야 함`);
+        }
+      }
+    }
+    // 건당 최소 미달: 조금 더 담으면
+    for(const r of rows){
+      for(const b of r.c.benefits){
+        if(r.c.id==='more1'||r.c.id==='more2') continue;
+        if(!b.cats.some(k=>cats.includes(k)) || r.rewNo.length || isExhausted(r.c.id,b) || brandOk(b)===false) continue;
+        if(b.min && amount<b.min && amount>=b.min*0.7){
+          const v = benefitValue(b, b.min, cats);
+          tips.push(`${r.c.short}: <b>${won(b.min-amount)}</b> 더 담으면 ${b.label} 적용 → 약 ${won(v)}`);
+        }
+      }
+    }
+    // 월 한도 초과: 초과분은 다른 카드로
+    const top = rows[0];
+    if(top && top.best && typeof top.best.rate==='number' && top.best.cap && top.val!=null && amount*top.best.rate > top.best.cap){
+      const fit = Math.floor(top.best.cap/top.best.rate);
+      const next = rows.find(r=>r!==top && r.potential>0);
+      let nextTxt='다른 카드로';
+      if(next){ const nb = (next.cond && (!next.best || (next.condVal??0)>=(next.val??0))) ? next.cond : next.best; const nv = benefitValue(nb, amount-fit, cats); nextTxt = `${next.c.short}${nb===next.cond?'('+payName(nb)+')':''}로 → 약 ${won(nv)}`; }
+      tips.push(`${top.c.short}: ${won(fit)}까지만 ${Math.round(top.best.rate*100)}%(한도 ${won(top.best.cap)}). 나머지 ${won(amount-fit)}은 ${nextTxt}`);
+    }
+  }
+  $('#tips').innerHTML = tips.length ? `<div class="tips"><span class="eyebrow">쪼개기·금액 팁</span><ul>${tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>` : '';
+
+  box.innerHTML = head + rows.map((r,i)=>{
+    const c=r.c;
+    // 혜택 셀
+    let bv='—', bcls='muted', bd='';
+    if(r.best){
+      const b=r.best;
+      bv = r.val!=null ? (r.val>0? '약 '+won(r.val) : '0원') : (typeof b.rate==='number'? Math.round(b.rate*100)+'%' : '적립');
+      bcls = (r.val===0)?'muted':'good';
+      bd = `<b>${b.label}</b> · ${b.cond}`;
+      if((b.rate==='more1'||b.rate==='more2') && amount!=null && amount>=5000){
+        const mult = b.rate==='more2'?2:1, rem = amount%1000;
+        bd = `<b>${b.label}</b> · 지금 끝자리 ${String(rem).padStart(3,'0')}원 → ${won(rem*mult)}. 끝자리 999로 맞추면 <b>${won(999*mult)}</b>` + (b.rate==='more2'?' (특별가맹점 ×2)':'');
+        if(rem===0){ bv='0원'; bcls='bad'; }
+      }
+    } else if(r.rewNo.length){ bv='제외'; bcls='bad'; bd=`${r.rewNo.map(k=>CATS[k].label).join(', ')}은 적립·할인 제외`; }
+    else { bd='이 영역 직접 혜택 없음'; }
+    if(r.cond){
+      const cv = r.condVal!=null ? (r.condVal>0? '약 '+won(r.condVal) : '0원') : Math.round(r.cond.rate*100)+'%';
+      bd += `<div class="alt">↳ <b>${payName(r.cond)}</b>로 결제 가능하면 ${r.cond.label} → <b>${cv}</b></div>`;
+      if(!r.best || (r.condVal!=null && r.val!=null && r.condVal>r.val)){ bv = cv; bcls='good'; }
+    }
+    // 실적 셀
+    let pv, pcls, pd='';
+    if(c.tiers[0][0]===0 && c.id==='tok'){ pv='무실적 카드'; pcls='muted'; pd='실적 신경 안 써도 됨'; }
+    else if(r.perfNo.length){ pv='✗ 미인정'; pcls='bad'; pd=`${r.perfNo.map(k=>CATS[k].label).join(', ')}은 실적 제외`; }
+    else { pv='✓ 인정'; pcls='good'; pd = c.tiers[0][0]>0 ? `기준 ${Math.round(c.tiers[0][0]/10000)}만` : '주차 조건용 1건 카운트'; }
+    if(c.id==='mgs' && !r.perfNo.length) pd += cats.some(k=>PAY_CATS.includes(k)) ? ' · 간편결제 15만 쪽' : ' · 비간편결제 15만 쪽';
+    const tags = [];
+    if(c.expires){ const d=dday(c.expires); tags.push(`<span class="tag ${d<90?'warn':''}">만료 D-${d}</span>`); }
+    if(c.id==='naeun' && r.best && r.best.cats.includes('coffee') && amount!=null && amount>=5000) tags.push('<span class="tag">월 6천 한도 소진 전까지 1순위</span>');
+    for(const e of activeEvents().filter(e=>e.card===c.id && e.cats.some(k=>cats.includes(k)))){
+      const d = dday(e.end), st = evState();
+      tags.push(`<span class="tag ${st[e.id]?'good':(d<=7?'warn':'')}">이벤트: ${e.title}${e.apply?(st[e.id]?' · 응모함':' · 응모 필요'):''} · ~${e.end.slice(5).replace('-','/')}</span>`);
+    }
+    if(r.brandNote) tags.push(`<span class="tag">${r.brandNote}</span>`);
+    r.warn.forEach(w=>tags.push(`<span class="tag warn">${w}</span>`));
+    return `<div class="card ${i===0&&r.best?'top':''}">
+      <div class="head"><h3>${c.short}<span class="issuer">${c.name}</span></h3>${c.links&&c.links.length?`<a class="doc" href="${c.links[0][1]}" target="_blank" rel="noopener">설명서 ↗</a>`:''}</div>
+      <div class="two">
+        <div class="cell"><span class="eyebrow">혜택 (적립·할인)</span><div class="v ${bcls}">${bv}</div><div class="d">${bd}</div></div>
+        <div class="cell"><span class="eyebrow">실적 인정</span><div class="v ${pcls}">${pv}</div><div class="d">${pd}</div></div>
+      </div>
+      ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}</div>`;
+  }).join('');
+}
+function dday(iso){ const t=new Date(iso+'T23:59:59+09:00'); return Math.ceil((t-Date.now())/86400000); }
+
+let SORT='benefit';
+document.querySelector('.seg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; SORT=b.dataset.sort; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x===b)); answer(); });
+
+// 칩
+const CHIPS = ['스타벅스 1.2만','메가커피 5천','네이버페이 3만','쿠팡 4.5만','KB Pay 2만','주유 7만','대중교통','통신요금','관리비','상품권','선불충전','배민 2.3만','넷플릭스'];
+$('#chips').innerHTML = CHIPS.map(c=>`<button class="chip" type="button">${c}</button>`).join('');
+$('#chips').addEventListener('click', e=>{ if(e.target.classList.contains('chip')){ $('#q').value=e.target.textContent; answer(); }});
+$('#q').addEventListener('input', answer);
+
+// ───────── 실적 매트릭스 ─────────
+const PERF_COLS = ['mgmt','utility','tax','insurance','voucher','prepaid','telecom','transit','overseas','installment','tuition'];
+function perfTable(){
+  const th = `<tr><th>카드</th>${PERF_COLS.map(k=>`<th>${CATS[k].label.split('(')[0]}</th>`).join('')}</tr>`;
+  const tr = CARDS.filter(c=>c.id!=='more2').map(c=>`<tr><td>${c.short}${c.id==='more1'?'(2장)':''}</td>${PERF_COLS.map(k=>{
+    if(c.perfExclude.includes(k)) return '<td class="no">✗</td>';
+    if(c.id==='mgs' && k==='telecom') return '<td class="so">△</td>';
+    return '<td class="ok">✓</td>';
+  }).join('')}</tr>`).join('');
+  $('#perfTable').innerHTML = th+tr;
+}
+const REW_COLS = ['mgmt','utility','tax','insurance','voucher','prepaid','installment','overseas'];
+function rewardTable(){
+  const th = `<tr><th>카드</th>${REW_COLS.map(k=>`<th>${CATS[k].label.split('(')[0]}</th>`).join('')}</tr>`;
+  const tr = CARDS.filter(c=>c.id!=='more2').map(c=>`<tr><td>${c.short}${c.id==='more1'?'(2장)':''}</td>${REW_COLS.map(k=>{
+    if(c.rewardExclude.includes(k)) return '<td class="no">✗</td>';
+    const has = c.benefits.some(b=>b.cats.includes(k)||b.cats.includes('general'));
+    return has ? '<td class="ok">✓</td>' : '<td class="so">—</td>';
+  }).join('')}</tr>`).join('');
+  $('#rewardTable').innerHTML = th+tr+'<tr><td colspan="9" style="white-space:normal;text-align:left;color:var(--muted);font-size:12px">✓ 적립·할인 대상 / ✗ 제외 / — 그 영역에 혜택 자체가 없음(실적만 채움)</td></tr>';
+}
+function tierTable(){
+  const th = '<tr><th>카드</th><th>실적 기준</th><th>구간별 혜택</th><th>메모</th></tr>';
+  const tr = CARDS.map(c=>`<tr><td>${c.short}</td><td>${c.tiers[0][0]===0?'무실적':won(c.tiers[0][0])+'↑'}</td><td style="white-space:normal;text-align:left">${c.tiers.map(t=>`${t[0]?Math.round(t[0]/10000)+'만':'0'}: ${t[1]}`).join(' / ')}</td><td style="white-space:normal;text-align:left;min-width:220px">${c.perfNote}</td></tr>`).join('');
+  $('#tierTable').innerHTML = th+tr;
+}
+
+// ───────── 이번 달 체크 ─────────
+const CHECKS = [
+  {id:'rpm1', text:'구RPM으로 이번 달 1건 이상 결제 (다음 달 무료주차 유지)'},
+  {id:'naeun_coffee', text:'더나은 커피 캐시백 6천 소진 → 이후 스타벅스는 나사카, 할리스·엔제리너스는 SKT우리(월 2회)', affects:{card:'naeun', cat:'coffee'}},
+  {id:'naeun_pay', text:'더나은 간편결제 6천 소진 → 이후 네이버/카카오페이는 MG+S로', affects:{card:'naeun', cat:'naverpay'}},
+  {id:'naeun_online', text:'더나은 온라인쇼핑 6천 소진 → 이후 쿠팡 등은 톡마포 KB Pay', affects:{card:'naeun', cat:'online'}},
+  {id:'tok20', text:'톡마포 KB Pay 20만 채움 (5% 한도 1만점 소진, 이후 0.5%만)', affects:{card:'tok', cat:'kbpay'}},
+  {id:'rpm_fuel', text:'구RPM 주유 월 4회/30만 소진', affects:{card:'rpm', cat:'fuel'}},
+  {id:'sktw_coffee', text:'SKT우리 할리스·엔제리너스 월 2회 소진', affects:{card:'sktw', cat:'coffee'}},
+  {id:'mgs_cap', text:'MG+S 통합할인한도 소진 (30만 구간 1.5만)', affects:{card:'mgs', cat:'*'}},
+  {id:'mgs_split', text:'MG+S 간편결제 15만 / 비간편결제 15만 둘 다 넘김'},
+  {id:'sktw30', text:'SKT우리 30만 넘김 (통신 1만 확정)'},
+  {id:'naeun30', text:'더나은 30만 넘김 (관리비·공과금 포함 OK)'},
+  {id:'nara20', text:'나사카 20만 넘김 (교통 제외 · 통합한도 1만)'},
+  {id:'more30', text:'은행·금투 더모아 각각 전월 30만 체크'},
+];
+// 체크된 한도 소진이 조회에 반영되도록
+function isExhausted(cardId, b){
+  const st = loadChecks();
+  return CHECKS.some(ch => ch.affects && st[ch.id] && ch.affects.card===cardId && (ch.affects.cat==='*' || b.cats.includes(ch.affects.cat)));
+}
+// 월 작전표: 규칙에서 나오는 카드별 목표
+const PLAN = [
+  {card:'더나은', target:'30만', where:'커피 3만(건당 5천↑) + 네·카·페이코 3만(건당 1만↑) + 쿠팡 등 3만(건당 1만↑) = 9만이 혜택 구간. 나머지 21만은 관리비·공과금·통신·상품권으로', gain:'1.8만 캐시백'},
+  {card:'톡마포', target:'KB Pay 20만', where:'KB Pay(오프라인은 삼성페이 되는 곳)로만. 세금·관리비·상품권 빼고 아무 데나', gain:'1.1만 P (+연 300만 시 1.2만 P)'},
+  {card:'MG+S', target:'30만 = 간편결제 15만 + 그 외 15만', where:'간편결제는 더나은 6천 소진 후부터 넘기기(건당 1만↑). 그 외 15만은 일반 결제. 관리비·세금·상품권은 안 들어감', gain:'최대 1.5만 할인'},
+  {card:'SKT우리', target:'30만', where:'관리비·공과금·상품권 다 인정 — 실적 채우기 1순위 카드. 할리스·엔제리너스 월 2회', gain:'통신 1만'},
+  {card:'나사카', target:'20만 (교통 제외)', where:'대중교통은 실적에 안 들어가니 다른 결제로. 스벅은 더나은 소진 후', gain:'통합한도 1만 (교통 20%·스벅 20%·CGV 35%)'},
+  {card:'은행·금투 더모아', target:'각 30만', where:'5천 이상 결제, 끝자리 999. 배달앱·OTT·백화점·해외·할부는 ×2. 세금·공과금·관리비·상품권은 실적 제외', gain:'결제당 최대 999~1,998 P'},
+  {card:'구RPM', target:'1건 + 주유 4회/30만', where:'주유는 전부 이 카드. 다른 결제 1건이라도 긁어야 다음 달 무료주차', gain:'주유 ℓ당 100P, 주차 3회'},
+];
+function renderEvents(){
+  const evs = activeEvents(); const st = evState();
+  if(!evs.length){ $('#events').innerHTML = '<div class="card empty" style="padding:18px">등록된 이벤트 없음. 월초에 "이번 달 이벤트 뭐 있어?"라고 물어보거나, 카드사 앱 이벤트 화면 캡처를 주면 여기에 들어감.</div>'; return; }
+  $('#events').innerHTML = '<div class="card">' + evs.sort((a,b)=>a.end.localeCompare(b.end)).map(e=>{
+    const c = CARDS.find(x=>x.id===e.card), d = dday(e.end);
+    return `<div class="check ${st[e.id]?'done':''}"><input type="checkbox" id="ev_${e.id}" ${st[e.id]?'checked':''}><label for="ev_${e.id}"><b>${c?c.short:e.card}</b> · ${e.title} <span class="tag ${d<=7?'warn':''}">D-${d}</span>${e.apply?' <span class="tag bad">응모 필요</span>':''}<div class="muted">${e.cond} → ${e.reward}${e.url?` · <a href="${e.url}" target="_blank" rel="noopener">이벤트 페이지 ↗</a>`:''}</div></label></div>`;
+  }).join('') + '</div>';
+  $('#events').addEventListener('change', ev=>{ const id=ev.target.id.replace('ev_',''); const o=evState(); o[id]=ev.target.checked; evSave(o); ev.target.closest('.check').classList.toggle('done', ev.target.checked); answer(); });
+}
+function renderPlan(){
+  $('#planTable').innerHTML = '<tr><th>카드</th><th>이번 달 목표</th><th>어디에</th><th>얻는 것</th></tr>' +
+    PLAN.map(p=>`<tr><td>${p.card}</td><td style="white-space:nowrap;font-weight:600">${p.target}</td><td style="white-space:normal;text-align:left;min-width:240px">${p.where}</td><td style="white-space:normal;text-align:left;min-width:120px">${p.gain}</td></tr>`).join('');
+  $('#planNote').innerHTML = '합계 약 <b>180만</b>(더나은30·KB Pay20·MG+S30·SKT우리30·나사카20·더모아60) + 주유. 관리비·공과금·상품권은 <b>더나은·SKT우리·구RPM</b>에만 실적이 되니 그쪽으로 몰고, 간편결제는 더나은 → MG+S 순서.';
+}
+function monthKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function loadChecks(){ try{ return JSON.parse(localStorage.getItem('cf_'+monthKey())||'{}'); }catch(e){ return {}; } }
+function saveChecks(o){ try{ localStorage.setItem('cf_'+monthKey(), JSON.stringify(o)); }catch(e){} }
+function renderMonth(){
+  const d=new Date(); const last=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  $('#monthTitle').textContent = `${d.getMonth()+1}월 체크 · 월말까지 ${last-d.getDate()}일`;
+  const k = [
+    {v:`D-${dday('2026-12-31')}`, l:'신한은행 더모아 만료 (26.12.31)'},
+    {v:`D-${dday('2027-01-31')}`, l:'신한금투 더모아 만료 (27.1.31)'},
+    {v:`${last-d.getDate()}일`, l:'실적 마감까지'},
+  ];
+  $('#kpi').innerHTML = k.map(x=>`<div class="card"><div class="v">${x.v}</div><div class="l">${x.l}</div></div>`).join('');
+  const st = loadChecks();
+  $('#checks').innerHTML = CHECKS.map(c=>`<div class="check ${st[c.id]?'done':''}"><input type="checkbox" id="chk_${c.id}" ${st[c.id]?'checked':''}><label for="chk_${c.id}">${c.text}</label></div>`).join('');
+  $('#checks').addEventListener('change', e=>{ const id=e.target.id.replace('chk_',''); const s=loadChecks(); s[id]=e.target.checked; saveChecks(s); e.target.closest('.check').classList.toggle('done', e.target.checked); answer(); });
+}
+
+// ───────── 카드 상세 ─────────
+function renderCards(){
+  $('#cards').innerHTML = CARDS.map(c=>`<details>
+    <summary><span><b>${c.short}</b> <span class="issuer">${c.name} · ${c.kind}</span></span><span class="meta">${c.tiers[0][0]===0?'무실적':Math.round(c.tiers[0][0]/10000)+'만↑'}${c.expires?' · ~'+c.expires.slice(0,7):''}</span></summary>
+    <div class="body"><dl>
+      <dt>혜택</dt><dd><ul>${c.benefits.map(b=>`<li><b>${b.label}</b> <span class="muted">${b.cond}</span></li>`).join('')}</ul></dd>
+      <dt>실적</dt><dd>${c.perfNote}</dd>
+      <dt>실적제외</dt><dd>${c.perfExclude.length? c.perfExclude.map(k=>CATS[k].label).join(', ') : '없음'}</dd>
+      <dt>혜택제외</dt><dd>${c.rewardExclude.length? c.rewardExclude.map(k=>CATS[k].label).join(', ') : '없음'}</dd>
+      <dt>주의</dt><dd><ul>${c.cautions.map(x=>`<li>${x}</li>`).join('')}</ul></dd>
+      <dt>원문</dt><dd class="links">${(c.links||[]).map(l=>`<a href="${l[1]}" target="_blank" rel="noopener">${l[0]} ↗</a>`).join('')}</dd>
+    </dl></div></details>`).join('');
+  $('#cardq').addEventListener('input', ()=>{
+    const q = $('#cardq').value.trim().toLowerCase();
+    document.querySelectorAll('#cards details').forEach(d=>{ const hit = !q || d.textContent.toLowerCase().includes(q); d.hidden = !hit; if(q && hit) d.open = true; });
+  });
+}
+
+// ───────── 탭 ─────────
+document.querySelector('.tabs').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected', x===b));
+  document.querySelectorAll('section[id^=tab-]').forEach(s=>s.hidden = s.id!=='tab-'+b.dataset.tab);
+  window.scrollTo({top:0});
+});
+
+// init
+$('#today').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) + ' · 주력 7장 + 더모아 2장';
+$('#q').value = '스타벅스 1.2만'; answer();
+perfTable(); rewardTable(); tierTable(); renderMonth(); renderPlan(); renderEvents(); renderCards();
+</script>
+
+</body>
+</html>
