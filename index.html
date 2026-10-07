@@ -111,12 +111,51 @@ section[hidden]{display:none}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
 </style>
 
+<style>
+.hl-tools{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);margin:8px 0 14px}
+.hl-tools button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;min-height:40px;padding:7px 10px}
+.hl-tools button:disabled{opacity:.45;cursor:default}
+.hl-tools button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hl-tools [aria-expanded=true]{background:var(--accent-soft);border-color:var(--accent)}
+.hl-palette{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.hl-palette button{width:36px;height:36px;min-height:36px;padding:0;border:2px solid transparent;background:var(--hl-color);border-radius:50%;box-shadow:inset 0 0 0 1px #0003}
+.hl-palette button[aria-pressed=true]{border-color:var(--fg);outline:2px solid var(--panel);outline-offset:-5px}
+.hl-actions{display:flex;gap:6px;flex-wrap:wrap}
+.hl-help{font-size:12px;color:var(--muted);margin:8px 0 0}
+mark.cf-highlight{background:var(--hl-color);color:#171717;padding:0;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#hl-status{min-height:18px}
+</style>
+
 <div class="wrap">
   <header>
     <div class="eyebrow">결제 전 10초</div>
     <h1>카드폴리오</h1>
     <div class="sub" id="today"></div>
   </header>
+
+  <div class="hl-tools" id="hl-tools">
+    <button type="button" id="hl-toggle" aria-expanded="false" aria-controls="hl-panel">🖍 형광펜</button>
+    <div id="hl-panel" hidden>
+      <div class="hl-palette" role="group" aria-label="형광펜 색상">
+        <button type="button" data-color="red" style="--hl-color:#ff9e9e" aria-label="빨강" aria-pressed="false" title="빨강"></button>
+        <button type="button" data-color="orange" style="--hl-color:#ffc078" aria-label="주황" aria-pressed="false" title="주황"></button>
+        <button type="button" data-color="yellow" style="--hl-color:#ffe66d" aria-label="노랑" aria-pressed="true" title="노랑"></button>
+        <button type="button" data-color="green" style="--hl-color:#a9e5a0" aria-label="초록" aria-pressed="false" title="초록"></button>
+        <button type="button" data-color="blue" style="--hl-color:#91caff" aria-label="파랑" aria-pressed="false" title="파랑"></button>
+        <button type="button" data-color="indigo" style="--hl-color:#a5afea" aria-label="남색" aria-pressed="false" title="남색"></button>
+        <button type="button" data-color="violet" style="--hl-color:#d6aff0" aria-label="보라" aria-pressed="false" title="보라"></button>
+      </div>
+      <div class="hl-actions">
+        <button type="button" id="hl-apply" disabled>선택한 글자 칠하기</button>
+        <button type="button" id="hl-erase" disabled>선택 지우기</button>
+        <button type="button" id="hl-undo" disabled>되돌리기</button>
+        <button type="button" id="hl-clear" disabled>전체 지우기</button>
+      </div>
+      <p class="hl-help">폰에서는 글자를 길게 눌러 선택 → 색 선택 → 칠하기. 칠한 부분을 누르면 지울 수 있어요.</p>
+      <p class="hl-help">이 브라우저에 저장됩니다. 내용이 바뀐 부분은 표시가 복원되지 않을 수 있어요.</p>
+      <div class="hl-help" id="hl-status" role="status" aria-live="polite"></div>
+    </div>
+  </div>
 
   <section id="tab-ask">
     <h2>어디서 얼마?</h2>
@@ -532,7 +571,7 @@ function answer(){
     }
     if(r.brandNote) tags.push(`<span class="tag">${r.brandNote}</span>`);
     r.warn.forEach(w=>tags.push(`<span class="tag warn">${w}</span>`));
-    return `<div class="card ${i===0&&r.best?'top':''}">
+    return `<div data-hl-card="${c.id}" class="card ${i===0&&r.best?'top':''}">
       <div class="head"><h3>${c.short}<span class="issuer">${c.name}</span></h3>${c.links&&c.links.length?`<a class="doc" href="${c.links[0][1]}" target="_blank" rel="noopener">설명서 ↗</a>`:''}</div>
       <div class="two">
         <div class="cell"><span class="eyebrow">혜택 (적립·할인)</span><div class="v ${bcls}">${bv}</div><div class="d">${bd}</div></div>
@@ -643,7 +682,7 @@ function renderMonth(){
 
 // ───────── 카드 상세 ─────────
 function renderCards(){
-  $('#cards').innerHTML = CARDS.map(c=>`<details>
+  $('#cards').innerHTML = CARDS.map(c=>`<details data-hl-card="${c.id}">
     <summary><span><b>${c.short}</b> <span class="issuer">${c.name} · ${c.kind}</span></span><span class="meta">${c.tiers[0][0]===0?'무실적':Math.round(c.tiers[0][0]/10000)+'만↑'}${c.expires?' · ~'+c.expires.slice(0,7):''}</span></summary>
     <div class="body"><dl>
       <dt>혜택</dt><dd><ul>${c.benefits.map(b=>`<li><b>${b.label}</b> <span class="muted">${b.cond}</span></li>`).join('')}</ul></dd>
@@ -671,6 +710,90 @@ document.querySelector('.tabs').addEventListener('click', e=>{
 $('#today').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) + ' · 주력 7장 + 더모아 2장';
 $('#q').value = '스타벅스 1.2만'; answer();
 perfTable(); rewardTable(); tierTable(); renderMonth(); renderPlan(); renderEvents(); renderCards();
+
+// ───────── 개인 형광펜: 카드 규칙·계산과 독립 ─────────
+(() => {
+  const colors={red:'#ff9e9e',orange:'#ffc078',yellow:'#ffe66d',green:'#a9e5a0',blue:'#91caff',indigo:'#a5afea',violet:'#d6aff0'};
+  const storageKey='cf_highlights_v1', wrap=document.querySelector('.wrap'), tools=$('#hl-tools');
+  let entries=[], color='yellow', picked=null, tapped=null, undo=null;
+  try { const saved=JSON.parse(localStorage.getItem(storageKey)||'[]'); if(Array.isArray(saved)) entries=saved.filter(x=>x&&typeof x.id==='string'&&typeof x.key==='string'&&typeof x.quote==='string'&&x.quote&&typeof x.before==='string'&&typeof x.after==='string'&&colors[x.color]); } catch(e){}
+  const status=t=>{$('#hl-status').textContent=t;};
+  const update=()=>{
+    $('#hl-apply').disabled=!picked; $('#hl-erase').disabled=!picked&&!tapped;
+    $('#hl-undo').disabled=!undo; $('#hl-clear').disabled=!entries.length;
+  };
+  function roots(){
+    const list=[];
+    document.querySelectorAll('#answer [data-hl-card],#cards [data-hl-card]').forEach(el=>{el.dataset.hlKey=el.closest('#answer')?'answer:'+el.dataset.hlCard:'cards:'+el.dataset.hlCard;list.push(el);});
+    document.querySelectorAll('.tablewrap table tr').forEach(el=>{el.dataset.hlKey='table:'+el.closest('table').id+':'+el.cells[0]?.textContent;list.push(el);});
+    document.querySelectorAll('#checks .check,#events .check').forEach(el=>{el.dataset.hlKey='check:'+el.querySelector('input')?.id;list.push(el);});
+    document.querySelectorAll('#tips,#planNote,section>h2,section>p,#cards+ .note').forEach(el=>{el.dataset.hlKey=el.id?'block:'+el.id:'section:'+el.closest('section').id+':'+el.tagName+':'+el.textContent;list.push(el);});
+    return list;
+  }
+  function locate(entry,root){
+    const text=root.textContent; let from=0,found=null;
+    while(from<=text.length){const at=text.indexOf(entry.quote,from);if(at<0)break;
+      const end=at+entry.quote.length;
+      if(text.slice(Math.max(0,at-entry.before.length),at)===entry.before&&text.slice(end,end+entry.after.length)===entry.after){if(found)return null;found={start:at,end};}
+      from=at+Math.max(1,entry.quote.length);
+    }
+    return found;
+  }
+  function paint(root,start,end,entry){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const parts=[];let n,pos=0;
+    while(n=walker.nextNode()){const next=pos+n.length;if(next>start&&pos<end)parts.push({node:n,a:Math.max(0,start-pos),b:Math.min(n.length,end-pos)});pos=next;}
+    for(const p of parts.reverse()){let node=p.node;if(p.b<node.length)node.splitText(p.b);if(p.a>0)node=node.splitText(p.a);
+      const mark=document.createElement('mark');mark.className='cf-highlight';mark.dataset.hlId=entry.id;mark.style.setProperty('--hl-color',colors[entry.color]);node.replaceWith(mark);mark.append(node);
+    }
+  }
+  const observer=new MutationObserver(changes=>{if(changes.every(x=>tools.contains(x.target)))return;picked=null;tapped=null;restore();update();});
+  function restore(){
+    observer.disconnect();
+    wrap.querySelectorAll('mark.cf-highlight').forEach(m=>m.replaceWith(...m.childNodes));
+    for(const root of roots()){
+      root.normalize();const ranges=[];
+      for(const entry of entries.filter(x=>x.key===root.dataset.hlKey)){const range=locate(entry,root);if(range&&!ranges.some(r=>range.start<r.end&&range.end>r.start))ranges.push({...range,entry});}
+      for(const r of ranges.sort((a,b)=>b.start-a.start))paint(root,r.start,r.end,r.entry);
+    }
+    observer.observe(wrap,{childList:true,subtree:true});
+  }
+  function save(){
+    let saved=true;try{localStorage.setItem(storageKey,JSON.stringify(entries));}catch(e){saved=false;}
+    picked=null;tapped=null;window.getSelection()?.removeAllRanges();restore();update();
+    return saved;
+  }
+  // Record text plus its immediate context; never restore solely by an old offset.
+  document.addEventListener('selectionchange',()=>{
+    const selection=window.getSelection();if(!selection||selection.isCollapsed||!selection.rangeCount)return;
+    const range=selection.getRangeAt(0), element=n=>n.nodeType===1?n:n.parentElement;
+    const root=element(range.startContainer)?.closest('[data-hl-key]');
+    if(!root||root!==element(range.endContainer)?.closest('[data-hl-key]')||root.closest('[hidden]')){picked=null;update();if(root)status('한 카드나 표의 한 행 안에서 글자를 선택해 주세요.');return;}
+    const pre=document.createRange();pre.selectNodeContents(root);pre.setEnd(range.startContainer,range.startOffset);
+    const start=pre.toString().length,quote=range.toString(),end=start+quote.length;
+    if(!quote.trim())return;
+    picked={key:root.dataset.hlKey,quote,before:root.textContent.slice(Math.max(0,start-32),start),after:root.textContent.slice(end,end+32),start,end,root};tapped=null;update();status('글자를 선택했습니다. 색을 고른 뒤 칠하기를 누르세요.');
+  });
+  tools.addEventListener('pointerdown',e=>{if(e.target.closest('button'))e.preventDefault();});
+  $('#hl-toggle').addEventListener('click',()=>{const open=$('#hl-panel').hidden;$('#hl-panel').hidden=!open;$('#hl-toggle').setAttribute('aria-expanded',String(open));});
+  tools.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>{color=b.dataset.color;tools.querySelectorAll('[data-color]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));status(b.getAttribute('aria-label')+' 선택');}));
+  $('#hl-apply').addEventListener('click',()=>{
+    if(!picked||!picked.root.isConnected||picked.root.closest('[hidden]'))return;
+    const selected=picked;undo=JSON.stringify(entries);
+    entries=entries.filter(x=>{if(x.key!==selected.key)return true;const r=locate(x,selected.root);return !r||r.end<=selected.start||r.start>=selected.end;});
+    entries.push({id:Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),key:selected.key,quote:selected.quote,before:selected.before,after:selected.after,color});
+    const ok=save();status(ok?'형광펜 표시를 저장했습니다.':'표시했지만 저장할 수 없습니다. 브라우저 저장 설정을 확인해 주세요.');
+  });
+  $('#hl-erase').addEventListener('click',()=>{
+    if(!picked&&!tapped)return;undo=JSON.stringify(entries);
+    entries=entries.filter(x=>{if(tapped)return x.id!==tapped;if(x.key!==picked.key)return true;const r=locate(x,picked.root);return !r||r.end<=picked.start||r.start>=picked.end;});
+    const ok=save();status(ok?'선택한 표시를 지웠습니다.':'지웠지만 변경을 저장할 수 없습니다.');
+  });
+  $('#hl-clear').addEventListener('click',()=>{undo=JSON.stringify(entries);entries=[];const ok=save();status(ok?'모든 표시를 지웠습니다. 되돌리기로 복구할 수 있어요.':'지웠지만 변경을 저장할 수 없습니다.');});
+  $('#hl-undo').addEventListener('click',()=>{if(!undo)return;entries=JSON.parse(undo);undo=null;const ok=save();status(ok?'이전 표시로 되돌렸습니다.':'되돌렸지만 변경을 저장할 수 없습니다.');});
+  wrap.addEventListener('click',e=>{if(tools.contains(e.target))return;const m=e.target.closest('mark.cf-highlight');if(m){tapped=m.dataset.hlId;picked=null;$('#hl-panel').hidden=false;$('#hl-toggle').setAttribute('aria-expanded','true');update();status('선택 지우기로 이 표시를 지울 수 있어요.');}else if(window.getSelection()?.isCollapsed){picked=null;tapped=null;update();}});
+  document.querySelector('.tabs').addEventListener('click',()=>{picked=null;tapped=null;update();status('');});
+  restore();update();
+})();
 </script>
 
 </body>
