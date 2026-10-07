@@ -196,12 +196,19 @@ const CATS = {
   utility: {label:'공과금(전기·가스·수도)', al:['공과금','전기','전기요금','가스','도시가스','수도','수도요금']},
   tax:     {label:'세금(국세·지방세)', al:['세금','국세','지방세','재산세','자동차세','취득세','관세']},
   insurance:{label:'4대보험', al:['4대보험','건강보험','국민연금','고용보험']},
-  voucher: {label:'상품권·기프트카드 구매', al:['상품권','기프트카드','기프티콘','문화상품권','컬쳐랜드','해피머니','북앤라이프']},
+  voucher: {label:'상품권·기프티콘 구매', al:['상품권','기프티콘','문화상품권','컬쳐랜드','해피머니','북앤라이프']},
   prepaid: {label:'선불충전(페이머니·교통 등)', al:['선불','충전','하나머니','네이버페이충전','카카오페이충전','토스충전','티머니충전','페이머니']},
   overseas:{label:'해외결제', al:['해외','달러','아마존','알리','해외직구']},
   tuition: {label:'학교납입금·등록금', al:['등록금','학교','학원','납입금','스쿨뱅킹']},
   rent:    {label:'부동산 임대료', al:['임대료','월세']},
   installment:{label:'할부', al:['할부','무이자','무이자할부']},
+  giftcard:{label:'기프트카드·선불카드 구매', al:['기프트카드','기프트 카드','선불카드구매','선불카드 구매']},
+  airline: {label:'항공사', gen:['항공','항공권','항공사','비행기'], al:['항공','항공권','항공사','비행기','에어서울','제주항공','진에어','티웨이','에어부산','이스타','대한항공','아시아나','에어프레미아','에어로케이']},
+  dutyfree:{label:'면세점', gen:['면세점','면세','듀티프리'], al:['면세점','면세','듀티프리','롯데면세','신라면세','신세계면세','현대면세','동화면세','시티면세','기내면세']},
+  inflightDutyfree:{label:'기내면세점(특별적립 제외)', al:['기내면세','기내 면세']},
+  university:{label:'대학교 등록금', al:['대학교등록금','대학등록금']},
+  government:{label:'정부지원금·장애인고용부담금', al:['정부지원금','장애인고용부담금']},
+  expressbusApp:{label:'고속버스 차내단말기·앱 결제', al:['고속버스앱','고속버스 app','고속버스차내','고속버스단말기']},
   general: {label:'일반 가맹점', al:['일반','마트','식당','편집','기타','아무데나','전가맹점']},
 };
 const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
@@ -211,11 +218,25 @@ const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
 // benefits[].min: 건당 최소금액, cap: 월 한도(원), rate: 비율(0.2=20%) 또는 fn
 const CARDS = [
   {
+    id:'unimilecheck', links:[['상품안내(우리)','https://m.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=838011'],['상품공시실(우리·2025.06 설명서)','https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?cardGdsNo=838011&exec=cardDetail']], name:'우리 카드의정석 UniMile CHECK', short:'유니마일 체크', issuer:'우리', kind:'체크',
+    tiers:[[300000,'기본·특별적립 / 라운지']],
+    perfNote:'전월 국내 가맹점 30만원 이상. 해외가맹점 이용금액·수수료·이자만 실적 제외. 국내 관리비·세금·상품권 구매·선불충전은 실적 포함. 교통·통신 자동납부는 매출표 접수월 기준. 취소금액 차감.',
+    perfExclude:['overseas'],
+    rewardExclude:['tax','utility','mgmt','insurance','university','government','giftcard','prepaid','expressbusApp'],
+    benefits:[
+      {cats:['airline'], brands:['에어서울','제주항공','진에어','티웨이','에어부산','이스타'], rate:0.015, min:0, cap:50000, label:'지정 6개 항공사 UniMile 1.5%', cond:'전월 국내 30만↑ · 항공사 공식 홈페이지/App/발권카운터 유료 서비스만 · 간편결제 특별적립 불가 · 해외·면세와 월 5만점 공유'},
+      {cats:['overseas'], rate:0.01, min:0, cap:50000, label:'해외 UniMile 1%', cond:'전월 국내 30만↑ · 간편결제 특별적립 불가 · 항공사·면세점과 월 5만점 공유 · 해외 수수료 제외 · 기내면세점 특별적립 제외'},
+      {cats:['dutyfree'], brands:['롯데면세','신라면세','신세계면세','현대면세','동화면세','시티면세','듀티프리'], rate:0.01, min:0, cap:50000, label:'면세점 UniMile 1%', cond:'전월 국내 30만↑ · 기내면세점 제외 · 일반 면세점 모두 대상 · 간편결제 특별적립 불가 · 항공사·해외와 월 5만점 공유'},
+      {cats:['general','coffee','online','cvs','dining','movie','fuel','park','dept','delivery','ott','telecom','transit','parking','rent','voucher','tuition','airline','naverpay','kakaopay','payco','tosspay','otherpay','kbpay','samsungpay'], rate:0.002, min:0, cap:null, label:'국내 기본 UniMile 0.2%', cond:'전월 국내 30만↑ · 특별적립 대상 외 국내 적립대상 가맹점 · 기본 월한도 없음 · 대학교 등록금 제외 · 상품권은 기프트/선불카드와 구분(상품별 확인)'},
+    ],
+    cautions:['공식 상품설명서 2025.06 기준. 신규발급 중단(2024.03.01), 연회비 없음','1 UniMile = 1원. 건별 1점 미만 절사(조회액은 반올림한 근사치)','특별적립은 L.Pay·스마일페이·PAYCO·카카오페이·토스페이·네이버페이·SSG pay·티몬페이·11pay·쿠페이·인터파크페이 경유 시 불가. 조회는 결제경로를 자동 판별하지 않으므로 특별적립 표시 조건을 반드시 확인','특별적립 월 5만점은 항공·해외·면세 통합. 조회는 누적 사용액과 공유한도 소진을 자동 계산하지 않음','기내면세점은 1% 특별적립 제외. 해외로 매입되는 경우 국내 기본적립도 대상 아님(확인)','상품권 구매 자체는 설명서 적립제외 목록에 별도 명시 없음. 기프트카드·선불카드 구매/충전과 모바일 교통카드 충전은 적립 제외. 모두 국내 이용 시 실적 포함','국내외 공항라운지: UnionPay만, 본인 월 1회·연 2회, 전월 국내 30만↑, THE LOUNGE 앱 이용. 국내전용 BC 불가','카드 등록일부터 다음달 말일까지 적립 실적 유예. 라운지는 이 기간에도 국내 30만 이용 후 다음날부터 제공','WON트래블VIP 시그니처 해외여행상품 5% 할인 가격: 전용 홈페이지 사전 예약·결제, 실적·횟수 제한 없음'],
+  },
+  {
     id:'mgs', links:[['상품안내(하나)','https://m.hanacard.co.kr/MGINTROM.web?CD_PD_SEQ=18590'],['상품설명서 PDF','https://qpay.hanacard.co.kr/leaflet/15/15417_20250616.pdf'],['나무위키 정리','https://namu.wiki/w/MG+%20S%20%ED%95%98%EB%82%98%EC%B9%B4%EB%93%9C']], name:'MG+S 하나카드', short:'MG+S', issuer:'하나(MG)', kind:'신용',
     tiers:[[300000,'통합 1.5만'],[600000,'통합 3만'],[1000000,'통합 6만']],
     perfNote:'할인받은 금액도 실적 포함. 일부 정리글에 "실적 절반(15만)은 간편결제, 절반은 비간편결제" 조건이 있으나 공식 설명서엔 없음(확인).',
-    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid','rent'],
-    rewardExclude:['installment','tax','utility','mgmt','insurance','tuition','voucher','prepaid','rent'],
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid','rent'],
+    rewardExclude:['installment','tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid','rent'],
     benefits:[
       {cats:PAY_CATS, rate:0.10, min:10000, cap:null, label:'간편결제 10% 청구할인', cond:'건당 1만원↑ · 통합한도 내 · 네이버/카카오/토스/SSG/11pay/스마일페이'},
       {cats:['ott'], rate:0.50, min:0, cap:null, label:'OTT·디지털멤버십 50%', cond:'통합한도 내'},
@@ -226,8 +247,8 @@ const CARDS = [
     id:'more1', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한은행 더모아 · 26.12 만료', short:'은행 더모아', issuer:'신한', kind:'신용', expires:'2026-12-31',
     tiers:[[300000,'적립 제공']],
     perfNote:'전월 30만 조건(확인). 5,000원 이상 결제만, 동일 가맹점 하루 1회.',
-    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid'],
-    rewardExclude:['voucher','prepaid'],
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid'],
+    rewardExclude:['voucher','giftcard','prepaid'],
     benefits:[
       {cats:['delivery','ott','dept','overseas','installment'], rate:'more2', min:5000, cap:null, label:'잔돈(1천원 미만) ×2 적립', cond:'5천원↑ · 배달앱/디지털콘텐츠/백화점(입점·온라인 제외)/해외/할부(무이자 제외) · 네이버페이로 결제하면 일반적립'},
       {cats:['general','coffee','online','cvs','dining','movie','fuel','park','kakaopay','naverpay','payco','tosspay','otherpay','samsungpay','transit','telecom'], rate:'more1', min:5000, cap:null, label:'잔돈(1천원 미만) 적립', cond:'5천원↑ · 같은 가맹점 하루 1회 · 끝자리 999에 가까울수록 유리'},
@@ -238,8 +259,8 @@ const CARDS = [
     id:'more2', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한금투 더모아 · 27.1 만료', short:'금투 더모아', issuer:'신한', kind:'신용', expires:'2027-01-31',
     tiers:[[300000,'적립 제공']],
     perfNote:'은행 더모아와 동일 규칙. 두 장은 별개 카드라 각자 실적·하루 1회 카운트.',
-    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','prepaid'],
-    rewardExclude:['voucher','prepaid'],
+    perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid'],
+    rewardExclude:['voucher','giftcard','prepaid'],
     benefits:[
       {cats:['delivery','ott','dept','overseas','installment'], rate:'more2', min:5000, cap:null, label:'잔돈 ×2 적립', cond:'5천원↑ · 특별가맹점'},
       {cats:['general','coffee','online','cvs','dining','movie','fuel','park','kakaopay','naverpay','payco','tosspay','otherpay','samsungpay','transit','telecom'], rate:'more1', min:5000, cap:null, label:'잔돈 적립', cond:'5천원↑ · 같은 가맹점 하루 1회'},
@@ -276,7 +297,7 @@ const CARDS = [
     tiers:[[0,'무실적']],
     perfNote:'무실적. KB Pay 월 20만원이 5% 적립 효율 최대(한도 1만점). KB Pay 연 300만 넘기면 12,000점 추가.',
     perfExclude:[],
-    rewardExclude:['tax','mgmt','tuition','voucher','prepaid','insurance','utility'],
+    rewardExclude:['tax','mgmt','tuition','voucher','giftcard','prepaid','insurance','utility'],
     benefits:[
       {cats:['kbpay'], rate:0.055, min:0, cap:10000, label:'KB Pay 5% + 기본 0.5%', cond:'5% 부분 월 1만점 한도(=KB Pay 20만원)'},
       {cats:['general','coffee','online','cvs','dining','movie','fuel','park','dept','delivery','ott','overseas','telecom','transit','samsungpay','naverpay','kakaopay','payco','tosspay','otherpay','installment','parking'], rate:0.005, min:0, cap:null, label:'전가맹점 0.5% 적립', cond:'실적·한도 없음'},
@@ -288,7 +309,7 @@ const CARDS = [
     tiers:[[100000,'통합 5천'],[200000,'통합 1만'],[300000,'통합 2만'],[500000,'통합 3만'],[1000000,'통합 5만']],
     perfNote:'대중교통 이용금액은 실적에 안 들어감. 해외·정부지원도 제외. 영역별 요구 실적(8만/20만/25만)은 확인 필요.',
     perfExclude:['transit','overseas'],
-    rewardExclude:['tax','voucher','prepaid','mgmt'],
+    rewardExclude:['tax','voucher','giftcard','prepaid','mgmt'],
     benefits:[
       {cats:['transit'], rate:0.20, min:0, cap:null, label:'대중교통 20% 청구할인', cond:'통합한도 내 · 전월실적 20~25만 구간 확인'},
       {cats:['coffee'], brands:['스타벅스','스벅'], rate:0.20, min:0, cap:null, label:'스타벅스 20%', cond:'스타벅스만 · 통합한도 내'},
