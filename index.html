@@ -236,7 +236,7 @@ const CATS = {
   tax:     {label:'세금(국세·지방세)', al:['세금','국세','지방세','재산세','자동차세','취득세','관세']},
   insurance:{label:'4대보험', al:['4대보험','건강보험','국민연금','고용보험']},
   voucher: {label:'상품권·기프티콘 구매', al:['상품권','기프티콘','문화상품권','컬쳐랜드','해피머니','북앤라이프']},
-  prepaid: {label:'선불충전(페이머니·교통 등)', al:['선불','충전','하나머니','네이버페이충전','카카오페이충전','토스충전','티머니충전','페이머니']},
+  prepaid: {label:'선불충전(페이머니·교통 등)', al:['선불','머니충전','페이충전','교통카드충전','교통충전','하나머니','네이버페이충전','카카오페이충전','토스충전','티머니충전','페이머니']},
   overseas:{label:'해외결제', al:['해외','달러','아마존','알리','해외직구']},
   tuition: {label:'학교납입금·등록금', al:['등록금','학교','학원','납입금','스쿨뱅킹']},
   rent:    {label:'부동산 임대료', al:['임대료','월세']},
@@ -249,6 +249,45 @@ const CATS = {
   government:{label:'정부지원금·장애인고용부담금', al:['정부지원금','장애인고용부담금']},
   expressbusApp:{label:'고속버스 차내단말기·앱 결제', al:['고속버스앱','고속버스 app','고속버스차내','고속버스단말기']},
   general: {label:'일반 가맹점', al:['일반','마트','식당','편집','기타','아무데나','전가맹점']},
+  rail: {"label":"철도(KORAIL)","gen":["철도","기차"],"al":["철도","기차","코레일","korail","ktx","itx","새마을호","무궁화호"]},
+  srt: {"label":"SRT","al":["srt"]},
+  expressbus: {"label":"고속버스","al":["고속버스"]},
+  hipass: {"label":"하이패스 통행료","al":["하이패스","hipass","통행료","톨게이트"]},
+  atm: {"label":"ATM 현금인출","al":["atm","현금인출","예금인출"]},
+  books: {"label":"도서","gen":["도서","서점","책"],"al":["도서","서점","책","알라딘","yes24","교보문고","영풍문고"]},
+  bakery: {"label":"베이커리","gen":["베이커리","빵"],"al":["베이커리","빵","파리바게뜨","뚜레쥬르"]},
+  mart: {"label":"대형마트","gen":["대형마트","할인점"],"al":["대형마트","할인점","이마트","롯데마트","홈플러스","트레이더스","하나로마트","vic마켓"]},
+  supermarket: {"label":"슈퍼마켓","al":["슈퍼","gs더프레시","에브리데이"]},
+  medical: {"label":"병원·약국","al":["병원","의원","약국","치과","한의원"]},
+  hotel: {"label":"숙박","al":["숙박","호텔","콘도","여관"]},
+  leisure: {"label":"스포츠·레저","al":["레저","스포츠센터","헬스","수영장","볼링","스키"],"gen":["레저","스포츠센터"]},
+  homeshopping: {"label":"TV 홈쇼핑","al":["홈쇼핑"]},
+  taxi: {"label":"택시","gen":["택시"],"al":["택시","카카오t","카카오티"]},
+  fastfood: {"label":"패스트푸드","gen":["패스트푸드","햄버거"],"al":["패스트푸드","햄버거","롯데리아","맥도날드","버거킹","맘스터치","kfc","써브웨이"]},
+  exams: {"label":"어학시험","al":["토익","toeic","opic","오픽","teps","jpt","hsk","어학시험"]},
+  px: {"label":"군마트(PX)","al":["px","군마트","피엑스"]},
+  militaryResort: {"label":"군 체력단련장·휴양시설","al":["군체력단련장","군휴양","국군콘도","군콘도"]},
+  japanDonki: {"label":"일본 돈키호테","al":["돈키호테","돈키","donquijote"]},
+  japanCvs: {"label":"일본 3대 편의점","al":["일본편의점","일본세븐","패밀리마트","familymart","로손","lawson"]},
+  vietnamMart: {"label":"베트남 롯데마트","al":["베트남롯데마트"]},
+  vietnamGrab: {"label":"베트남 Grab","al":["베트남grab","베트남그랩"]},
+  usaStarbucks: {"label":"미국 스타벅스","al":["미국스타벅스","미국스벅"]},
+  overseasTransit: {"label":"해외 대중교통 컨택리스","al":["해외대중교통","해외교통컨택리스"]},
+  evcharge: {"label":"전기차 급속충전","al":["전기차충전","급속충전"]},
+  languageSchool: {"label":"외국어학원·유학원","al":["외국어학원","유학원"]},
+  solpay: {"label":"신한 SOL페이","al":["sol페이","쏠페이","솔페이","solpay"]},
+  ssgpay: {"label":"SSG페이","al":["ssg페이","ssgpay"]},
+  citytransit: {"label":"시내버스·지하철","al":["시내버스","지하철","대중교통","후불교통"]},
+  intercity: {"label":"시외버스","al":["시외버스"]},
+  interestFree: {"label":"무이자할부","al":["무이자"]},
+  water: {"label":"수도요금","al":["수도","수도요금"]},
+  electricgas: {"label":"전기·도시가스 자동납부","al":["전기요금","도시가스","가스요금"]},
+  chinavisa: {"label":"중국 비자 수수료","al":["중국비자","중국비자발급"]},
+  fees: {"label":"수수료·이자·연회비","al":["수수료","연회비","이자"]},
+  loans: {"label":"단기·장기 카드대출","al":["카드론","현금서비스","카드대출"]},
+  canceled: {"label":"취소 매출","al":["매출취소","취소금액"]},
+  prepaidcardcharge: {"label":"선불카드 충전","al":["선불카드충전"]},
+  ktxexpress: {"label":"KTX·ITX·고속버스","al":["ktx","itx","고속버스"]},
 };
 const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
 
@@ -375,11 +414,2442 @@ const CARDS = [
     ],
     cautions:['통신 1만 할인을 위해 매달 30만 실적만 넘기면 됨 — 실적제외가 거의 없어 채우기용으로 최적'],
   },
+{
+  "id": "woorivrail",
+  "name": "우리V카드-철도마일리지(영업점)",
+  "short": "우리V 철도",
+  "issuer": "우리",
+  "kind": "신용",
+  "tiers": [
+    [
+      0,
+      "철도5%·국내0.8%"
+    ],
+    [
+      300000,
+      "주유·놀이공원"
+    ],
+    [
+      1000000,
+      "GS칼텍스80원/ℓ"
+    ]
+  ],
+  "perfNote": "철도·국내 기본 포인트는 전월 실적 조건 없음. 주유·놀이공원은 전월 국내 가맹점 30만원, 우수회원 주유는 100만원. 전월 1일~말일 승인 기준이며 해외·카드대출·수수료·이자·연회비 제외. 국내 상품권·선불충전·세금·관리비는 별도 실적제외 기재 없음. GS칼텍스 이용금액 제외는 주유할인용 실적에만 적용. 등록월부터 다음달 말까지 최저 실적구간 유예. 교통·통신 자동납부는 매출표 접수월, 취소는 접수월 차감(매월 1~2일 접수분은 전월 차감). 가족카드 실적·횟수·한도는 각각 관리.",
+  "perfExclude": [
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "fees",
+    "loans",
+    "canceled",
+    "atm"
+  ],
+  "rewardExclude": [
+    "canceled",
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "atm"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "rail"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 20000,
+      "label": "KORAIL 승차권 5%",
+      "cond": "1천원당50P·일2회·월2만P/연12만P·실적조건 없음"
+    },
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "transit",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "mgmt",
+        "utility",
+        "tax",
+        "insurance",
+        "voucher",
+        "prepaid",
+        "tuition",
+        "rent",
+        "installment",
+        "giftcard",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "srt",
+        "expressbus",
+        "hipass",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "taxi",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "evcharge",
+        "languageSchool",
+        "citytransit",
+        "intercity",
+        "interestFree",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "prepaidcardcharge",
+        "ktxexpress"
+      ],
+      "rate": 0.008,
+      "min": 0,
+      "cap": 100000,
+      "label": "국내 일반 0.8%",
+      "cond": "철도승차권 제외·1천원당8P·건당10만P·실적조건 없음"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "GS칼텍스 60원/ℓ, 우수회원 80원/ℓ",
+      "cond": "국내30만/100만, GS칼텍스 결제 제외 실적. 휘발유 공시가격 기준·LPG 제외·일1/월4회·건당 주유10만원까지 · 조회 금액 자동계산 제외, 카드 설명 기준"
+    },
+    {
+      "cats": [
+        "park"
+      ],
+      "rate": 0.5,
+      "min": 0,
+      "cap": null,
+      "label": "지정 놀이공원 50%",
+      "cond": "국내30만·본인 자유이용권 현장결제·통합월1회·캐리비안베이는30%",
+      "brands": [
+        "에버랜드",
+        "롯데월드",
+        "서울랜드",
+        "경주월드"
+      ]
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "포인트로 승차권 구매 시 사용 포인트의 3%",
+      "cond": "100P 단위 사용·일반 카드결제 5%와 구분 · 조회 금액 자동계산 제외, 카드 설명 기준"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "우리은행 거래수수료 면제",
+      "cond": "전월 국내 이용 1건 이상 수수료항목별 월5회, 국내30만 이상 월10회 · 조회 금액 자동계산 제외, 카드 설명 기준"
+    }
+  ],
+  "links": [
+    [
+      "공식 상품공시실 · 우리V철도마일리지(2025.03.07)",
+      "https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do"
+    ]
+  ],
+  "cautions": [
+    "레일플러스 상품과 구분한 우리V철도마일리지 공식 안내장 기준. 확인일 2026.10.08",
+    "매출취소·캐시백 사용금액은 포인트 제외. 상품권 구매·선불충전의 일반 포인트 제외를 임의로 추가하지 않음",
+    "1천원당 포인트 방식으로 실제 절사액과 조회 근사치가 다를 수 있음. 누적 월·연 한도는 자동 차감하지 않음",
+    "조회의 일반 실적 인정과 주유 서비스용 GS칼텍스 제외 실적은 별도. 카드 설명의 서비스별 조건 확인",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "woorioneatm",
+  "name": "우리ONE 체크카드(국제 ATM)",
+  "short": "우리ONE ATM",
+  "issuer": "우리",
+  "kind": "체크",
+  "tiers": [
+    [
+      200000,
+      "교육·생활 할인"
+    ],
+    [
+      0,
+      "ATM·여행·중국비자는 실적무관"
+    ]
+  ],
+  "perfNote": "교육·생활 할인은 전월 국내 가맹점 20만원. ATM 우대·여행5%·중국비자50%는 전월 실적 무관. 전월 1일~말일 국내 승인액 합산, 교통은 매출표 접수월. 국내 상품권·관리비·선불충전 등 별도 실적제외 목록은 설명서에 기재 없음. 해외 쇼핑 결제 불가, ATM 현금인출은 국내 가맹점 결제가 아님. 취소는 접수월 차감. 등록월~다음달 말까지 교육·생활 20만원 조건 유예. 가족카드 합산 불가.",
+  "perfExclude": [
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "atm"
+  ],
+  "rewardExclude": [],
+  "benefits": [
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 5000,
+      "label": "스타벅스·커피빈 10%",
+      "cond": "국내20만·일1/월2회·월5천·입점매장/상품권/선불카드 구매충전 제외",
+      "brands": [
+        "스타벅스",
+        "스벅",
+        "커피빈"
+      ]
+    },
+    {
+      "cats": [
+        "languageSchool"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 5000,
+      "label": "외국어학원·유학원 5%",
+      "cond": "국내20만·오프라인 BC업종·일1/월1회·월5천"
+    },
+    {
+      "cats": [
+        "exams"
+      ],
+      "rate": "flat3000",
+      "min": 3000,
+      "cap": 3000,
+      "label": "TOEIC 인터넷 접수 3천원 할인",
+      "cond": "국내20만·공식 사이트·월1/연6회 · TOEIC만, 기타 어학시험 제외",
+      "brands": [
+        "토익",
+        "toeic"
+      ]
+    },
+    {
+      "cats": [
+        "books"
+      ],
+      "rate": "flat3000",
+      "min": 30000,
+      "cap": 3000,
+      "label": "온라인 교보·영풍·YES24 도서 3천원 할인",
+      "cond": "국내20만·건당3만원 이상·통합월1/연6회·서적만",
+      "brands": [
+        "교보문고",
+        "영풍문고",
+        "yes24"
+      ]
+    },
+    {
+      "cats": [
+        "movie"
+      ],
+      "rate": 0.4,
+      "min": 10000,
+      "cap": 4000,
+      "label": "영화 관람권 4천원 할인",
+      "cond": "국내20만·CGV/메가박스/롯데시네마 공식예매 또는 현장·건당1만원 이상이면 정액4천·월1/연6회"
+    },
+    {
+      "cats": [
+        "telecom"
+      ],
+      "rate": 0.03,
+      "min": 0,
+      "cap": 1500,
+      "label": "지정 통신요금 자동납부 3%",
+      "cond": "국내20만·KT/SKT/LGU+/SK브로드밴드/세종텔레콤·최초1건·납부5만원까지(월1,500원)"
+    },
+    {
+      "cats": [
+        "airline",
+        "dutyfree",
+        "hotel"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 1000,
+      "label": "항공·지정 면세·NOL 여행 5%",
+      "cond": "무실적·항공사/롯데·신세계·신라면세/NOL 숙박 공식결제·건당1천/통합월5천·호텔 직접결제는 NOL 혜택 대상 아님"
+    },
+    {
+      "cats": [
+        "chinavisa"
+      ],
+      "rate": 0.5,
+      "min": 0,
+      "cap": 30000,
+      "label": "중국 비자 수수료 50%",
+      "cond": "무실적·중국비자발급센터·본인+가족 연5회·회당3만원"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "ExK 해외 ATM 환율우대 30%·네트워크수수료 면제",
+      "cond": "미국/필리핀/태국/베트남/인도네시아. 300달러 이상 인출500원, 미만1천원. 현지ATM 추가 수수료 별도. 조회0.5달러(필리핀 조회불가) · 조회 금액 자동계산 제외, 카드 설명 기준"
+    }
+  ],
+  "links": [
+    [
+      "공식 상품공시실 · 우리ONE 국제ATM(2026.07.01)",
+      "https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do"
+    ]
+  ],
+  "cautions": [
+    "2026.07.01 안내장 원문 기준. 말레이시아는 지원 국가에서 제외",
+    "환율우대30%는 환전 수수료 우대이며 인출원금30% 환급이 아님",
+    "서비스별 제외 거래를 카드 전체 혜택제외로 확대하지 않음. 커피 상품권/선불충전 제외는 커피 서비스 조건",
+    "여행 월5천과 건당1천을 구분. 조회는 건당 상한 적용·횟수/월잔여한도 미연동",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "kdbchoice",
+  "name": "KDB CHOICE 체크카드",
+  "short": "KDB CHOICE",
+  "issuer": "KDB산업은행",
+  "kind": "체크",
+  "tiers": [
+    [
+      0,
+      "통합 캐시백 1천"
+    ],
+    [
+      300000,
+      "2천"
+    ],
+    [
+      600000,
+      "4천"
+    ],
+    [
+      900000,
+      "8천"
+    ],
+    [
+      1200000,
+      "1.2만"
+    ]
+  ],
+  "perfNote": "선택한 2개 업종에서 5% 캐시백. 전월 0/30/60/90/120만원에 통합 월한도 1천/2천/4천/8천/1만2천원. 공식 안내상 이 카드로 거래한 모든 이용금액이 전월 실적에 포함: 상품권·선불카드 구매는 혜택 제외지만 실적 포함. 승인시점 기준 집계. 매월1일 한도 생성, 말일 소멸·이월 없음. 가족카드는 실적·한도 각각 관리. 국내전용이며 해외 사용 불가.",
+  "perfExclude": [
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "atm"
+  ],
+  "rewardExclude": [
+    "voucher",
+    "giftcard"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "mart",
+        "dept",
+        "medical",
+        "hotel",
+        "supermarket",
+        "leisure",
+        "online",
+        "coffee",
+        "telecom",
+        "homeshopping"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 1000,
+      "label": "본인이 선택한 2개 업종 5%",
+      "cond": "선택한 업종에 한해서만 적용(선택 업종 미확인). 전월0원 구간 통합월1천으로 조회·30/60/90/120만은2천/4천/8천/1.2만·연2회 업종 변경"
+    }
+  ],
+  "links": [
+    [
+      "KDB 공식 상품안내·설명서(2026.07.01)",
+      "https://smart.kdb.co.kr/mp/MHBMCA01N01.act?_WSLOG_PRD_C=150001020035&_WSLOG_MNU_ID=IHIHMH0006"
+    ]
+  ],
+  "cautions": [
+    "KDB 공식 상품안내 원문 기준(공시 유효기간2026.07.01~2027.06.30). 원문 링크에서 설명서/약관 확인 가능.",
+    "선택 업종은 개인 설정으로 공식 설명서에 없는 정보. 조회 금액은 해당 업종을 선택했을 때의 조건부 예상액",
+    "BC 등록업종 기준. 커피:스타벅스/엔제리너스/카페베네/커피빈/탐앤탐스/투썸플레이스/파스쿠찌/할리스(할인점·백화점 입점 제외). 숙박 예약대행·레저 골프·슈퍼 편의점 제외.",
+    "상품권/선불카드 구매 혜택 제외. 선불전자머니 충전을 선불카드 구매와 동일한 제외 규칙으로 단정하지 않음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "wowri",
+  "name": "우리 카드의정석 WOWRI",
+  "short": "WOWRI",
+  "issuer": "우리",
+  "kind": "신용",
+  "tiers": [
+    [
+      300000,
+      "특별·추가 1만P"
+    ],
+    [
+      600000,
+      "2만P"
+    ],
+    [
+      1200000,
+      "5만P"
+    ]
+  ],
+  "perfNote": "전월 국내 가맹점 30만원 이상. 해외·카드대출·수수료·이자·연회비만 실적 제외(취소액 차감). 국내 상품권 구매·선불충전·세금·공과금·관리비는 실적 포함이며 포인트 제외와 별개. 전월 1일~말일 승인 기준. 등록월부터 다음달 말까지 최저 실적구간 유예. 교통·통신 자동납부는 매출표 접수월, 취소는 접수월 차감(매월 1~2일 접수분은 전월 차감). 특별+간편결제 추가 통합한도:30/60/120만원 → 월1/2/5만P. 기본0.8% 무한도.",
+  "perfExclude": [
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "fees",
+    "loans",
+    "canceled",
+    "atm"
+  ],
+  "rewardExclude": [
+    "interestFree",
+    "tax",
+    "utility",
+    "mgmt",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "expressbusApp",
+    "government",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "telecom",
+        "citytransit",
+        "evcharge"
+      ],
+      "rate": 0.05,
+      "min": 10000,
+      "cap": 10000,
+      "label": "특별 5%",
+      "cond": "국내30만·건당1만 이상·이동통신 자동납부/버스지하철/지정 후불교통 전기차충전·특별+추가 통합월1/2/5만P"
+    },
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.03,
+      "min": 10000,
+      "cap": 10000,
+      "label": "스타벅스·엔제리너스·이디야 3%",
+      "cond": "국내30만·건당1만 이상·입점매장 제외·특별+추가 월통합한도",
+      "brands": [
+        "스타벅스",
+        "스벅",
+        "엔제리너스",
+        "엔젤",
+        "이디야"
+      ]
+    },
+    {
+      "cats": [
+        "movie"
+      ],
+      "rate": 0.03,
+      "min": 10000,
+      "cap": 10000,
+      "label": "CGV·롯데시네마 3%",
+      "cond": "국내30만·건당1만 이상·공식예매·특별+추가 월통합한도",
+      "brands": [
+        "cgv",
+        "롯데시네마"
+      ]
+    },
+    {
+      "cats": [
+        "dept",
+        "mart",
+        "online",
+        "fuel",
+        "dutyfree",
+        "overseas"
+      ],
+      "rate": 0.01,
+      "min": 10000,
+      "cap": 10000,
+      "label": "지정 쇼핑·주유·면세·해외 1%",
+      "cond": "국내30만·건당1만 이상·지정 가맹점(원문 목록)·LPG 제외·특별+추가 통합월1/2/5만P"
+    },
+    {
+      "cats": [
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "ssgpay"
+      ],
+      "rate": 0.03,
+      "min": 10000,
+      "cap": 10000,
+      "label": "간편결제 추가분 3%",
+      "cond": "국내30만·건당1만 이상·네이버/카카오/PAYCO/SSGPAY. 조회액은 추가분만이며 기본/특별 포인트 별도(총3.8~8%). 특별+추가 월통합한도"
+    },
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "transit",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "mgmt",
+        "utility",
+        "tax",
+        "insurance",
+        "voucher",
+        "prepaid",
+        "tuition",
+        "rent",
+        "installment",
+        "giftcard",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "srt",
+        "expressbus",
+        "hipass",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "taxi",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "evcharge",
+        "languageSchool",
+        "citytransit",
+        "intercity",
+        "interestFree",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "prepaidcardcharge",
+        "ktxexpress"
+      ],
+      "rate": 0.008,
+      "min": 10000,
+      "cap": null,
+      "label": "기본 0.8%",
+      "cond": "국내30만·건당1만 이상·특별 가맹점 외 국내 거래·무한도"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "투인원 체크 매출 0.3%",
+      "cond": "신용결제율과 구분·간편결제 추가 적립 미적용 · 조회 금액 자동계산 제외, 카드 설명 기준"
+    }
+  ],
+  "links": [
+    [
+      "공식 상품공시실 · WOWRI(2026.09.01)",
+      "https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do"
+    ]
+  ],
+  "cautions": [
+    "2026.09.01 공식 안내장 원문 기준. 4대보험을 혜택제외로 임의 추가하지 않음",
+    "5% 이동통신:SKT/KT/LGU+/헬로모바일/KTM모바일/U+유모바일 휴대폰 자동납부(인터넷·유선 결합 제외)",
+    "전기차:환경부(한국자동차환경협회)/한국전기차충전/한국전력/GS차지비 후불교통카드 충전. 전기차 충전은 페이머니 선불충전과 구분",
+    "1%:신세계/현대/롯데백화점(오프라인), 이마트/홈플러스/롯데마트/롯데마트맥스/트레이더스, 11번가/G마켓/옥션/롯데ON/쿠팡/티몬/롯데홈쇼핑/우리WON마켓, SK/GS칼텍스/HD현대오일뱅크/S-OIL. 조회의 업종명만으로 모든 매장 해당을 보장하지 않음",
+    "조회는 특별·추가 최저구간 상한만 계산. 추가3%와 기본/특별 적립 자동합산 및 월잔여한도 계산은 없음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "alwayson",
+  "name": "Always On 신한카드",
+  "short": "Always On",
+  "issuer": "신한",
+  "kind": "신용",
+  "tiers": [
+    [
+      0,
+      "당월 1만원 시 1천P"
+    ],
+    [
+      300000,
+      "영화 할인"
+    ]
+  ],
+  "perfNote": "기본은 전월 실적이 아니라 당월 1만원 이상 이용 시 월1천P. SOL페이만2건 이상 또는 일반결제+SOL페이 혼용이면 추가1천P, SOL페이만1건이면 기본1천P. 영화는 전월30만원. 실적제외는 기프트카드 구매·선불카드 충전·카드대출·수수료·이자·연회비·취소액. 일반 상품권 구매나 페이머니 충전을 동일한 제외로 단정하지 않음. 등록월~다음달 영화 실적 유예. 본인·가족 이용금액 합산.",
+  "perfExclude": [
+    "giftcard",
+    "prepaidcardcharge",
+    "fees",
+    "loans",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "giftcard",
+    "prepaidcardcharge",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "당월 1만원 이용 시 월 1천P",
+      "cond": "SOL페이 조건 충족 시 월 1천P 추가. 한 거래의 10% 적립이 아님 · 월 누적/정액 조건으로 조회 금액 자동계산 제외 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "SOL페이 조건 충족 시 월 추가 1천P",
+      "cond": "SOL페이만 1건이면 기본 1천P만, SOL페이만 2건 이상 또는 일반+SOL페이 혼용 시 합계 2천P · 월 누적/정액 조건으로 조회 금액 자동계산 제외 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "CGV·메가박스 1,500/3,000원 할인",
+      "cond": "전월 30만·공식 웹/앱 예매·9천원 이상 1,500원 / 1.8만원 이상 3,000원·일2/월4/연12회 · 월 누적/정액 조건으로 조회 금액 자동계산 제외 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [
+        "movie"
+      ],
+      "rate": "flat3000",
+      "min": 18000,
+      "cap": 3000,
+      "label": "CGV·메가박스 관람권 3,000원 할인",
+      "cond": "전월30만·공식 웹/앱·건당1.8만원 이상·일2/월4/연12회. 9천~1.8만원 미만은1,500원(카드 설명 기준)",
+      "brands": [
+        "cgv",
+        "메가박스"
+      ]
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/credit/1188291_2207.html"
+    ]
+  ],
+  "cautions": [
+    "당월 적립과 전월 영화 실적을 구분. 개인 누적 이용내역은 조회에 연동되지 않음",
+    "기본 포인트는 다음달 20일 적립",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "globalplus",
+  "name": "Global + 신한카드 체크",
+  "short": "Global+ 체크",
+  "issuer": "신한",
+  "kind": "체크",
+  "tiers": [
+    [
+      300000,
+      "국내 통합5천"
+    ],
+    [
+      500000,
+      "1만"
+    ],
+    [
+      800000,
+      "1.5만"
+    ],
+    [
+      1000000,
+      "2만"
+    ]
+  ],
+  "perfNote": "국내 혜택 전월 30만원, 해외 1.2%는 무실적. 해외 이용은 전월 실적 포함. 실적제외: 기프트카드 구매·선불카드 충전·수수료·이자·취소. 일반 상품권 구매는 별도 명시 없음. 국내는 승인일·해외는 접수일 기준 전월1일~말일. 교통은 전전월 이용액 반영. 가족카드 발급 불가. 등록월~다음달은 국내 통합5천원 구간 유예. 국내 한도30/50/80/100만원 →5천/1만/1.5만/2만원.",
+  "perfExclude": [
+    "giftcard",
+    "prepaidcardcharge",
+    "fees",
+    "loans",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "giftcard",
+    "prepaidcardcharge",
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "overseas"
+      ],
+      "rate": 0.012,
+      "min": 0,
+      "cap": null,
+      "label": "해외 1.2% 캐시백",
+      "cond": "무실적·횟수/한도 없음·해외 수수료 별도"
+    },
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.05,
+      "min": 10000,
+      "cap": 2000,
+      "label": "스타벅스 5%",
+      "cond": "전월30만·건당1만원↑·일1/월4회·건당2천·국내 통합한도",
+      "brands": [
+        "스타벅스",
+        "스벅"
+      ]
+    },
+    {
+      "cats": [
+        "citytransit"
+      ],
+      "rate": 0.02,
+      "min": 0,
+      "cap": 2000,
+      "label": "대중교통 2%",
+      "cond": "전월30만·월2천·국내 통합한도"
+    },
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "transit",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "mgmt",
+        "utility",
+        "tax",
+        "insurance",
+        "voucher",
+        "prepaid",
+        "tuition",
+        "rent",
+        "installment",
+        "giftcard",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "srt",
+        "expressbus",
+        "hipass",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "taxi",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "evcharge",
+        "languageSchool",
+        "citytransit",
+        "intercity",
+        "interestFree",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "prepaidcardcharge",
+        "ktxexpress"
+      ],
+      "rate": 0.002,
+      "min": 0,
+      "cap": 5000,
+      "label": "국내 기본 0.2%",
+      "cond": "전월30만·국내 통합한도. 30만 구간 최대5천으로 계산"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "해외 ATM 건당 US$3 캐시백",
+      "cond": "무실적·일1회·월1만원 별도. 인출 수수료 $3+1% 부과 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/check/1192668_2206.html"
+    ]
+  ],
+  "cautions": [
+    "국내 기본·커피·교통 통합한도 공유. 조회는 첫 구간 한도를 적용하며 누적 잔여한도 미연동",
+    "상품권은 커피 브랜드 상품권 등 특정 서비스에서 추가 제외될 수 있음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "hipasscredit",
+  "name": "후불하이패스 + 신한카드",
+  "short": "신한 후불하이패스+",
+  "issuer": "신한",
+  "kind": "신용",
+  "tiers": [
+    [
+      0,
+      "통행료0.1%"
+    ]
+  ],
+  "perfNote": "하이패스 전용. 0.1% 적립에 전월 실적 조건 없음. 일반 가맹점용 카드 실적과 연동하지 않음.",
+  "perfExclude": [
+    "coffee",
+    "naverpay",
+    "kakaopay",
+    "payco",
+    "tosspay",
+    "otherpay",
+    "kbpay",
+    "samsungpay",
+    "online",
+    "transit",
+    "fuel",
+    "parking",
+    "telecom",
+    "movie",
+    "dining",
+    "park",
+    "ott",
+    "delivery",
+    "dept",
+    "cvs",
+    "mgmt",
+    "utility",
+    "tax",
+    "insurance",
+    "voucher",
+    "prepaid",
+    "overseas",
+    "tuition",
+    "rent",
+    "installment",
+    "giftcard",
+    "airline",
+    "dutyfree",
+    "inflightDutyfree",
+    "university",
+    "government",
+    "expressbusApp",
+    "general",
+    "rail",
+    "srt",
+    "expressbus",
+    "atm",
+    "books",
+    "bakery",
+    "mart",
+    "supermarket",
+    "medical",
+    "hotel",
+    "leisure",
+    "homeshopping",
+    "taxi",
+    "fastfood",
+    "exams",
+    "px",
+    "militaryResort",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "evcharge",
+    "languageSchool",
+    "solpay",
+    "ssgpay",
+    "citytransit",
+    "intercity",
+    "interestFree",
+    "water",
+    "electricgas",
+    "chinavisa",
+    "fees",
+    "loans",
+    "canceled",
+    "prepaidcardcharge",
+    "ktxexpress"
+  ],
+  "rewardExclude": [
+    "coffee",
+    "naverpay",
+    "kakaopay",
+    "payco",
+    "tosspay",
+    "otherpay",
+    "kbpay",
+    "samsungpay",
+    "online",
+    "transit",
+    "fuel",
+    "parking",
+    "telecom",
+    "movie",
+    "dining",
+    "park",
+    "ott",
+    "delivery",
+    "dept",
+    "cvs",
+    "mgmt",
+    "utility",
+    "tax",
+    "insurance",
+    "voucher",
+    "prepaid",
+    "overseas",
+    "tuition",
+    "rent",
+    "installment",
+    "giftcard",
+    "airline",
+    "dutyfree",
+    "inflightDutyfree",
+    "university",
+    "government",
+    "expressbusApp",
+    "general",
+    "rail",
+    "srt",
+    "expressbus",
+    "atm",
+    "books",
+    "bakery",
+    "mart",
+    "supermarket",
+    "medical",
+    "hotel",
+    "leisure",
+    "homeshopping",
+    "taxi",
+    "fastfood",
+    "exams",
+    "px",
+    "militaryResort",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "evcharge",
+    "languageSchool",
+    "solpay",
+    "ssgpay",
+    "citytransit",
+    "intercity",
+    "interestFree",
+    "water",
+    "electricgas",
+    "chinavisa",
+    "fees",
+    "loans",
+    "canceled",
+    "prepaidcardcharge",
+    "ktxexpress"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "hipass"
+      ],
+      "rate": 0.001,
+      "min": 0,
+      "cap": null,
+      "label": "통행료 0.1% 포인트",
+      "cond": "도로공사 출퇴근 할인과 중복 가능"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/credit/1188219_2207.html"
+    ]
+  ],
+  "cautions": [
+    "일반 가맹점 결제용 카드가 아님",
+    "출퇴근20~50%는 도로공사 시간·거리·차종 조건의 별도 할인. 전체 통행료 혜택으로 계산하지 않음",
+    "조회에서 다른 업종의 미인정/제외 표시는 일반 가맹점 결제 불가를 뜻함. 하이패스 통행료 적립 조건은 실적 설명 기준.",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "hipasscheck",
+  "name": "하이패스(체크) 신한카드",
+  "short": "신한 하이패스 체크",
+  "issuer": "신한",
+  "kind": "체크",
+  "tiers": [
+    [
+      100000,
+      "보유 신한 체크 실적"
+    ]
+  ],
+  "perfNote": "발급월 포함 2개월 조건 유예. 이후 고객 보유 신한 체크카드 전월 10만원 이상일 때 0.1% 적립. 이 전용카드 자체 실적 10만원 조건으로 처리하지 않음.",
+  "perfExclude": [
+    "coffee",
+    "naverpay",
+    "kakaopay",
+    "payco",
+    "tosspay",
+    "otherpay",
+    "kbpay",
+    "samsungpay",
+    "online",
+    "transit",
+    "fuel",
+    "parking",
+    "telecom",
+    "movie",
+    "dining",
+    "park",
+    "ott",
+    "delivery",
+    "dept",
+    "cvs",
+    "mgmt",
+    "utility",
+    "tax",
+    "insurance",
+    "voucher",
+    "prepaid",
+    "overseas",
+    "tuition",
+    "rent",
+    "installment",
+    "giftcard",
+    "airline",
+    "dutyfree",
+    "inflightDutyfree",
+    "university",
+    "government",
+    "expressbusApp",
+    "general",
+    "rail",
+    "srt",
+    "expressbus",
+    "atm",
+    "books",
+    "bakery",
+    "mart",
+    "supermarket",
+    "medical",
+    "hotel",
+    "leisure",
+    "homeshopping",
+    "taxi",
+    "fastfood",
+    "exams",
+    "px",
+    "militaryResort",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "evcharge",
+    "languageSchool",
+    "solpay",
+    "ssgpay",
+    "citytransit",
+    "intercity",
+    "interestFree",
+    "water",
+    "electricgas",
+    "chinavisa",
+    "fees",
+    "loans",
+    "canceled",
+    "prepaidcardcharge",
+    "ktxexpress"
+  ],
+  "rewardExclude": [
+    "coffee",
+    "naverpay",
+    "kakaopay",
+    "payco",
+    "tosspay",
+    "otherpay",
+    "kbpay",
+    "samsungpay",
+    "online",
+    "transit",
+    "fuel",
+    "parking",
+    "telecom",
+    "movie",
+    "dining",
+    "park",
+    "ott",
+    "delivery",
+    "dept",
+    "cvs",
+    "mgmt",
+    "utility",
+    "tax",
+    "insurance",
+    "voucher",
+    "prepaid",
+    "overseas",
+    "tuition",
+    "rent",
+    "installment",
+    "giftcard",
+    "airline",
+    "dutyfree",
+    "inflightDutyfree",
+    "university",
+    "government",
+    "expressbusApp",
+    "general",
+    "rail",
+    "srt",
+    "expressbus",
+    "atm",
+    "books",
+    "bakery",
+    "mart",
+    "supermarket",
+    "medical",
+    "hotel",
+    "leisure",
+    "homeshopping",
+    "taxi",
+    "fastfood",
+    "exams",
+    "px",
+    "militaryResort",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "evcharge",
+    "languageSchool",
+    "solpay",
+    "ssgpay",
+    "citytransit",
+    "intercity",
+    "interestFree",
+    "water",
+    "electricgas",
+    "chinavisa",
+    "fees",
+    "loans",
+    "canceled",
+    "prepaidcardcharge",
+    "ktxexpress"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "hipass"
+      ],
+      "rate": 0.001,
+      "min": 0,
+      "cap": null,
+      "label": "통행료 0.1% 포인트",
+      "cond": "보유 신한 체크 전월10만·발급월 포함2개월 유예"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/check/1188329_2206.html"
+    ]
+  ],
+  "cautions": [
+    "하이패스 전용·국내 체크 승인/해외 사용 차단. 일부 무승인 특수거래 예외",
+    "출퇴근20~50%는 도로공사 별도 정책. 이 카드를 모든 가맹점에서 실적 쌓는 카드로 추천하지 않음",
+    "조회에서 다른 업종의 미인정/제외 표시는 일반 가맹점 결제 불가를 뜻함. 하이패스 통행료 적립 조건은 실적 설명 기준.",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "soltripj",
+  "name": "SOL트립앤J(체크) 신한카드",
+  "short": "SOL트립앤J",
+  "issuer": "신한",
+  "kind": "체크",
+  "tiers": [
+    [
+      300000,
+      "국내·일본 할인"
+    ]
+  ],
+  "perfNote": "전월 국내 30만원. 해외·상품권·기프트/선불 구매충전·세금·4대보험·학교납입금/대학등록금·관리비·공과금 제외. 대출·수수료·이자·연회비·취소 제외. 국내 승인일 기준, 취소는 원래 이용월 차감. 교통은 전전월(모바일후불은 전월). 가족카드 발급 불가. 등록월~다음달 국내 혜택 유예, 일본 혜택은 유예기간에도 국내 누적30만원 필요.",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "usaStarbucks",
+    "vietnamMart",
+    "vietnamGrab",
+    "overseasTransit",
+    "atm",
+    "fees",
+    "loans",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "voucher",
+    "giftcard",
+    "prepaid"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "japanDonki"
+      ],
+      "rate": 0.5,
+      "min": 0,
+      "cap": 20000,
+      "label": "일본 돈키호테 50%",
+      "cond": "전월 국내30만·오프라인·반기2만원/연4만원·1~6월/7~12월"
+    },
+    {
+      "cats": [
+        "japanCvs"
+      ],
+      "rate": 0.5,
+      "min": 0,
+      "cap": 5000,
+      "label": "일본 3대 편의점 50%",
+      "cond": "전월 국내30만·반기5천/연1만원·FamilyMart/Lawson/Seven-Eleven"
+    },
+    {
+      "cats": [
+        "cvs"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 3000,
+      "label": "국내 4대 편의점 5%",
+      "cond": "전월 국내30만·일1/월3회·월3천·오프라인"
+    },
+    {
+      "cats": [
+        "citytransit",
+        "intercity"
+      ],
+      "rate": 0.01,
+      "min": 0,
+      "cap": 3000,
+      "label": "국내 대중교통 1%",
+      "cond": "전월 국내30만·RF터치·월3천·고속버스 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "해외 결제·ATM 수수료 면제",
+      "cond": "JCB·외화결제계좌·무실적·현지 ATM 자체 수수료 별도 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/check/1237542_2206.html"
+    ]
+  ],
+  "cautions": [
+    "일본 혜택 한도는 월이 아니라 반기. 이미 사용한 한도·연 한도 자동 차감 없음",
+    "신규 국내혜택은 등록월+다음달 유예. 일본 혜택은 유예기간에도 국내 누적30만 이용 후 제공",
+    "JCB 일본·하와이 라운지는 브랜드 서비스 조건 확인. 공식 해외 수수료율 표기가 일부 상이하여 면제 여부만 기록",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "shnara",
+  "name": "나라사랑(체크) 신한카드",
+  "short": "신한 나라사랑",
+  "issuer": "신한",
+  "kind": "체크",
+  "tiers": [
+    [
+      100000,
+      "Life5천"
+    ],
+    [
+      200000,
+      "2만"
+    ],
+    [
+      500000,
+      "3만"
+    ],
+    [
+      700000,
+      "4만"
+    ],
+    [
+      1000000,
+      "5만"
+    ]
+  ],
+  "perfNote": "Life 전월10만부터. 해외 이용은 실적 포함. 상품권·기프트/선불 구매충전·세금·4대보험·학교납입금/대학등록금·관리비·공과금·대출·수수료·이자·연회비·취소 제외. 국내는 승인일·해외는 접수일 기준 전월1일~말일, 국내 취소는 원래 승인월·해외 취소는 취소전표 매입월 차감. 교통은 전전월(모바일후불 전월). 가족카드 발급 불가. 등록월~다음달 Life10만원 구간 유예. 해외1%·PX·군휴양은 실적무관, 테마파크는 국내30만원.",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "fees",
+    "loans",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "interestFree",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "citytransit"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 5000,
+      "label": "시내버스·지하철 20%",
+      "cond": "전월10만·월5천·Life 통합한도·RF후불"
+    },
+    {
+      "cats": [
+        "ktxexpress"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 3000,
+      "label": "광역교통 10%",
+      "cond": "전월10만·월3천·Life 통합한도·SRT/시외버스/공항교통 제외"
+    },
+    {
+      "cats": [
+        "taxi"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 2000,
+      "label": "카카오T 택시 10%",
+      "cond": "전월10만·월2천·공식 앱 내 카드결제만·간편/현장결제 제외"
+    },
+    {
+      "cats": [
+        "cvs"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 1000,
+      "label": "GS25·CU 20%",
+      "cond": "전월10만·일1회1천/월5회5천·Life 통합한도",
+      "brands": [
+        "gs25",
+        "cu"
+      ]
+    },
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 2000,
+      "label": "지정 커피 5%",
+      "cond": "전월10만·일1회2천/월3회6천·Life 통합한도·입점 제외",
+      "brands": [
+        "스타벅스",
+        "스벅",
+        "이디야",
+        "메가",
+        "폴바셋",
+        "컴포즈",
+        "매머드",
+        "빽다방"
+      ]
+    },
+    {
+      "cats": [
+        "books"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 6000,
+      "label": "알라딘·YES24 5%",
+      "cond": "전월10만·월6천·공식 웹/앱만",
+      "brands": [
+        "알라딘",
+        "yes24"
+      ]
+    },
+    {
+      "cats": [
+        "telecom"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 5000,
+      "label": "이동통신 자동납부 5%",
+      "cond": "전월10만·첫 자동납부1회/월5천·알뜰폰허브 포함"
+    },
+    {
+      "cats": [
+        "leisure"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 6000,
+      "label": "스포츠센터·레포츠 5%",
+      "cond": "전월10만·월6천·Life 통합한도"
+    },
+    {
+      "cats": [
+        "delivery"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 1000,
+      "label": "배달의민족 5%",
+      "cond": "전월10만·일1회1천/월5회5천·앱 내 카드결제",
+      "brands": [
+        "배민",
+        "배달의민족"
+      ]
+    },
+    {
+      "cats": [
+        "ott"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 5000,
+      "label": "지정 OTT 10%",
+      "cond": "전월10만·월5천·공식 정기결제·인앱 제외",
+      "brands": [
+        "유튜브",
+        "티빙",
+        "넷플릭스"
+      ]
+    },
+    {
+      "cats": [
+        "online"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 6000,
+      "label": "무신사·29CM 10%",
+      "cond": "전월10만·월6천·공식 웹/앱",
+      "brands": [
+        "무신사",
+        "29cm"
+      ]
+    },
+    {
+      "cats": [
+        "overseas"
+      ],
+      "rate": 0.01,
+      "min": 0,
+      "cap": null,
+      "label": "해외 1% 캐시백",
+      "cond": "무실적·VISA·해외 수수료 별도"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "CGV 관람권 6천원 정액 제공",
+      "cond": "전월10만·월1회·본인+동반1인·2D 단독 티켓. 6천원 할인과 다름 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "군마트(PX) 최대50% 캐시백",
+      "cond": "무실적·3만원 미만20%(매월10일50%), 일1회 최대1천원. 3만원 이상20%는 일한도 제한 없음. PX 통합월10만원 · 금액구간/날짜 조건으로 조회 금액 자동계산 제외 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [
+        "militaryResort"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 20000,
+      "label": "군 휴양·체력단련장20%",
+      "cond": "무실적·월2만원·국방부 지정 시설"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "테마파크50% / 캐리비안베이30%",
+      "cond": "전월30만·시설별일1/연3회·에버랜드/롯데월드/서울랜드 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [
+        "px"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 1000,
+      "label": "PX 3만원 미만 20%",
+      "cond": "무실적·일1회 최대1천원·PX 통합월10만원. 매월10일은50%이나 조회액은 일반일 기준"
+    },
+    {
+      "cats": [
+        "px"
+      ],
+      "rate": 0.2,
+      "min": 30000,
+      "cap": 100000,
+      "label": "PX 3만원 이상 20%",
+      "cond": "무실적·건당3만원 이상은 일한도 제한 없음·PX 통합월10만원"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/check/1236922_2206.html"
+    ]
+  ],
+  "cautions": [
+    "2026년 3기 나라사랑 상품. 기존 KB 카드와 별개",
+    "Life 통합한도는5천/2만/3만/4만/5만. 조회 금액은 영역 상한이며 실제 통합 잔여한도 내에서 지급",
+    "CU 행사품목10% 즉시할인(무실적·월5천)은 대상품목일 때만. 일반CU 구매 전부에 더하지 않음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "soltravel",
+  "name": "SOL트래블(체크) 신한카드",
+  "short": "SOL트래블",
+  "issuer": "신한",
+  "kind": "체크",
+  "tiers": [
+    [
+      300000,
+      "국내 할인·라운지"
+    ]
+  ],
+  "perfNote": "국내혜택·라운지 전월 국내30만원. 해외·상품권·기프트/선불 구매충전·세금·4대보험·학교납입금/대학등록금·관리비·공과금·대출·수수료·이자·연회비·취소 제외. 국내 승인일 기준, 취소는 원래 이용월 차감. 교통은 전전월(모바일후불은 전월). 가족카드 발급 불가. 등록월~다음달 국내혜택 유예, 라운지는 유예기간에도 국내 누적30만원 필요. 해외 수수료 면제·해외 컨택리스교통1%는 실적 무관.",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit",
+    "atm",
+    "fees",
+    "loans",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "voucher",
+    "giftcard",
+    "prepaid"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "cvs"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 3000,
+      "label": "국내 4대 편의점5%",
+      "cond": "전월 국내30만·일1/월3회·월3천·오프라인"
+    },
+    {
+      "cats": [
+        "citytransit"
+      ],
+      "rate": 0.01,
+      "min": 0,
+      "cap": 3000,
+      "label": "국내 대중교통1%",
+      "cond": "전월 국내30만·RF터치·월3천·고속버스 제외"
+    },
+    {
+      "cats": [
+        "overseasTransit"
+      ],
+      "rate": 0.01,
+      "min": 0,
+      "cap": null,
+      "label": "해외 컨택리스 대중교통1%",
+      "cond": "무실적·MASTERCARD·대상 교통사업자/방식 원문 확인"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "해외 결제·ATM 수수료 면제",
+      "cond": "무실적·MASTERCARD·외화결제계좌·현지 ATM 자체 수수료 별도 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(신한)",
+      "https://www.shinhancard.com/pconts/html/card/apply/check/1225714_2206.html"
+    ]
+  ],
+  "cautions": [
+    "더라운지 본인 연2회(반기1회)·전월국내30만. 신규기간에도 국내 누적30만 필요",
+    "CU 행사품목5% 즉시할인은 품목조건/건당2천. 일반CU5%와 자동합산하지 않음",
+    "일본 편의점·베트남 롯데마트/Grab·미국 스타벅스5%는2026.12.31까지 프로모션. EVENTS에서 분리",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "hananara",
+  "name": "하나 나라사랑카드(체크)",
+  "short": "하나 나라사랑",
+  "issuer": "하나",
+  "kind": "체크",
+  "tiers": [
+    [
+      100000,
+      "Basic5천"
+    ],
+    [
+      200000,
+      "1만"
+    ],
+    [
+      300000,
+      "2만"
+    ],
+    [
+      500000,
+      "3만"
+    ],
+    [
+      1000000,
+      "5만"
+    ]
+  ],
+  "perfNote": "Basic 국내외 실적10만원부터. 해외 실적 포함. 세금·공과금·관리비·4대보험·학교납입금/등록금·상품권·기프트/선불 구매충전·임대료·ATM 제외. 전월1일~말일 승인 기준(해외 포함). 후불교통은 매출 접수월, 취소는 접수월 차감. 등록월~다음달 Basic10만원 구간 유예. 회원 단위 실적·횟수·한도 통합. 쿠팡/네이버쇼핑·PX는 실적무관. 택시·배달·디지털·CGV팝콘은 전월 국군재정관리단 급여를 하나 나라사랑통장으로 받아야 제공.",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "voucher",
+    "giftcard",
+    "prepaid"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "online"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 1000,
+      "label": "쿠팡·네이버쇼핑20%",
+      "cond": "무실적·공식 웹/앱·일1천/월3천·상품권/여행/티켓/도서 등 제외",
+      "brands": [
+        "쿠팡",
+        "네이버쇼핑",
+        "네이버플러스스토어"
+      ]
+    },
+    {
+      "cats": [
+        "citytransit"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 10000,
+      "label": "버스·지하철20%",
+      "cond": "전월10만·월1만·Basic 통합한도"
+    },
+    {
+      "cats": [
+        "militaryResort"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 10000,
+      "label": "국군 콘도20%",
+      "cond": "전월10만·월1만·Basic 통합한도·직영 숙박만"
+    },
+    {
+      "cats": [
+        "dining"
+      ],
+      "rate": 0.2,
+      "min": 10000,
+      "cap": 20000,
+      "label": "아웃백·VIPS20%",
+      "cond": "전월10만·건당1만↑·월2만·Basic 통합한도",
+      "brands": [
+        "아웃백",
+        "vips",
+        "빕스"
+      ]
+    },
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.2,
+      "min": 10000,
+      "cap": 4000,
+      "label": "스타벅스20%",
+      "cond": "전월10만·건당1만↑·건당4천·Basic 통합한도",
+      "brands": [
+        "스타벅스",
+        "스벅"
+      ]
+    },
+    {
+      "cats": [
+        "fastfood"
+      ],
+      "rate": 0.05,
+      "min": 10000,
+      "cap": 2000,
+      "label": "지정 패스트푸드5%",
+      "cond": "전월10만·건당1만↑·월2천·Basic 통합한도"
+    },
+    {
+      "cats": [
+        "online"
+      ],
+      "rate": 0.1,
+      "min": 10000,
+      "cap": 5000,
+      "label": "지정 온라인쇼핑10%",
+      "cond": "전월10만·건당1만↑·월5천·Basic 통합한도",
+      "brands": [
+        "무신사",
+        "29cm",
+        "g마켓",
+        "지마켓",
+        "옥션",
+        "11번가"
+      ]
+    },
+    {
+      "cats": [
+        "exams"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 5000,
+      "label": "어학시험5%",
+      "cond": "전월10만·월5천·공식사이트·Basic 통합한도"
+    },
+    {
+      "cats": [
+        "books"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 5000,
+      "label": "교보문고·알라딘5%",
+      "cond": "전월10만·월5천·Basic 통합한도",
+      "brands": [
+        "교보문고",
+        "알라딘"
+      ]
+    },
+    {
+      "cats": [
+        "rail",
+        "srt",
+        "expressbus",
+        "intercity"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 2000,
+      "label": "기차·고속/시외버스5%",
+      "cond": "전월10만·월2천·공식결제·Basic 통합한도"
+    },
+    {
+      "cats": [
+        "delivery"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 5000,
+      "label": "배달3사20%",
+      "cond": "군급여 하나 나라사랑통장 이체 다음달·월5천",
+      "brands": [
+        "배민",
+        "배달의민족",
+        "쿠팡이츠",
+        "요기요"
+      ]
+    },
+    {
+      "cats": [
+        "taxi"
+      ],
+      "rate": 0.2,
+      "min": 0,
+      "cap": 5000,
+      "label": "택시20%",
+      "cond": "군급여 하나 나라사랑통장 이체 다음달·월5천·카카오T 결제방식 확인"
+    },
+    {
+      "cats": [
+        "ott"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 2000,
+      "label": "디지털라이프10%",
+      "cond": "군급여 하나 나라사랑통장 이체 다음달·월2천·지정정기결제",
+      "brands": [
+        "유튜브",
+        "넷플릭스",
+        "쿠팡와우",
+        "네이버플러스멤버십"
+      ]
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "군마트20~30% 캐시백",
+      "cond": "무실적·3만원 미만30%(일5천/월1만),3만원 이상20%(일2만/월10만) · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "에버랜드·롯데월드50%",
+      "cond": "전월10만·월1회·본인1매 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "트래블로그 스위치 수수료 면제",
+      "cond": "외화 하나머니 설정·가입 동의 완료 필요. 체크결제 설정이면 수수료 부과 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [
+        "px"
+      ],
+      "rate": 0.3,
+      "min": 0,
+      "cap": 5000,
+      "label": "PX 3만원 미만 30%",
+      "cond": "무실적·일5천/월1만원. 건당3만원 이상은 아래20% 구간 적용"
+    },
+    {
+      "cats": [
+        "px"
+      ],
+      "rate": 0.2,
+      "min": 30000,
+      "cap": 20000,
+      "label": "PX 3만원 이상 20%",
+      "cond": "무실적·건당3만원 이상·일2만원/월10만원"
+    }
+  ],
+  "links": [
+    [
+      "상품안내(하나)",
+      "https://m.vip.hanacard.co.kr/MKCDCM1000M.web?CD_PD_SEQ=18754&cateType=MKCDPD6100M"
+    ]
+  ],
+  "cautions": [
+    "Basic 통합한도5천/1만/2만/3만/5만. 조회는 영역 상한이며 통합 잔여한도 자동연동 없음",
+    "급여 조건: 국군재정관리단 → 하나은행 나라사랑통장 수령 다음달",
+    "CU 행사품목10%(국군의날·현충일30%) 및 급여조건 CGV 스몰팝콘세트 월1/연6회는 대상/방법 확인",
+    "복수카드 보유해도 실적·한도·횟수는 회원 단위 통합",
+    "군급여 배달:공휴일 최대1만원/일, 평일 등 월5천원. CGV 스몰팝콘 무료8천원 상당 월1/연6회. 설정된 급여 수령 여부는 조회하지 않음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "travelgo",
+  "name": "트래블GO 체크카드 하나카드",
+  "short": "트래블GO",
+  "issuer": "하나",
+  "kind": "체크",
+  "tiers": [
+    [
+      200000,
+      "편의점·커피·교통·구독 각5천"
+    ],
+    [
+      500000,
+      "생활비5천 추가"
+    ]
+  ],
+  "perfNote": "국내외 실적20만원/50만원. 해외 실적 포함. 세금·공과금·관리비·4대보험·학교납입금/등록금·상품권·기프트/선불 구매충전·임대료·ATM 제외. 해외 수수료 면제는 무실적. 전월1일~말일 국내외 일시불 승인 기준. 후불교통 접수월·취소 접수월 차감. 등록월~다음달20만원 구간 유예(생활비50만원 구간까지 유예되는 것은 아님).",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "tax",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "water",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "cvs"
+      ],
+      "rate": 0.05,
+      "min": 10000,
+      "cap": 5000,
+      "label": "4대 편의점5%",
+      "cond": "전월20만·건당1만↑·월5회/5천·오프라인"
+    },
+    {
+      "cats": [
+        "coffee",
+        "bakery"
+      ],
+      "rate": 0.05,
+      "min": 10000,
+      "cap": 5000,
+      "label": "스타벅스·커피빈·베이커리5%",
+      "cond": "전월20만·건당1만↑·합산월5회/5천·파리바게뜨/뚜레쥬르",
+      "brands": [
+        "스타벅스",
+        "스벅",
+        "커피빈",
+        "파리바게뜨",
+        "뚜레쥬르"
+      ]
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "버스·지하철5%",
+      "cond": "전월20만·월 교통합산5만원↑·월5천. 월합산 조건이라 건별 예상액 계산 제외 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    },
+    {
+      "cats": [
+        "ott"
+      ],
+      "rate": 0.05,
+      "min": 7000,
+      "cap": 5000,
+      "label": "지정 구독5%",
+      "cond": "전월20만·건당7천↑·월5회/5천·유튜브/넷플릭스/쿠팡와우 정기결제",
+      "brands": [
+        "유튜브",
+        "넷플릭스",
+        "쿠팡와우"
+      ]
+    },
+    {
+      "cats": [
+        "telecom",
+        "electricgas"
+      ],
+      "rate": 0.05,
+      "min": 50000,
+      "cap": 5000,
+      "label": "생활비5%",
+      "cond": "전월50만·건당5만↑·통신 자동납부(SKT/KT/LGU+) 및 전기/가스·월5회/5천·수도 제외"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "해외 결제·ATM 수수료 면제",
+      "cond": "무실적·VISA·외화 하나머니·현지ATM 자체 수수료 별도 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    }
+  ],
+  "links": [
+    [
+      "상품설명서(하나)",
+      "https://m.hanacard.co.kr/leaflet/15/15105_20240821.pdf"
+    ]
+  ],
+  "cautions": [
+    "하나머니에서 국내대금을 출금하는 트래블GO 상품. 은행계좌에서 출금하는 ‘하나 트래블GO’와 구분",
+    "전기/가스는 생활비 혜택 대상이나 전월 실적에서는 제외. 혜택제외와 실적제외를 별도로 입력",
+    "생활비 수도 제외·알뜰폰 제외·입점매장/배달경유 제외. 사용횟수·잔여한도 자동확인 없음",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "travellog",
+  "name": "트래블로그 체크카드 하나카드",
+  "short": "트래블로그",
+  "issuer": "하나",
+  "kind": "체크",
+  "tiers": [
+    [
+      0,
+      "국내0.3%·해외수수료면제"
+    ]
+  ],
+  "perfNote": "전월 실적 조건 없음. 국내적립 제외와 실적 조건 유무는 별개.",
+  "perfExclude": [],
+  "rewardExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "canceled",
+    "overseas",
+    "japanDonki",
+    "japanCvs",
+    "vietnamMart",
+    "vietnamGrab",
+    "usaStarbucks",
+    "overseasTransit"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "transit",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "mgmt",
+        "utility",
+        "tax",
+        "insurance",
+        "voucher",
+        "prepaid",
+        "tuition",
+        "rent",
+        "installment",
+        "giftcard",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "srt",
+        "expressbus",
+        "hipass",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "taxi",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "evcharge",
+        "languageSchool",
+        "citytransit",
+        "intercity",
+        "interestFree",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "prepaidcardcharge",
+        "ktxexpress"
+      ],
+      "rate": 0.003,
+      "min": 0,
+      "cap": null,
+      "label": "국내0.3% 하나머니",
+      "cond": "무실적·한도 없음·국내 원화 하나머니 결제"
+    },
+    {
+      "cats": [],
+      "rate": 0,
+      "min": 0,
+      "cap": null,
+      "label": "해외 결제·ATM 수수료 면제",
+      "cond": "무실적·외화 하나머니·브랜드별 조건 확인·현지ATM 자체 수수료 별도 · 정액/수수료·누적 조건으로 조회 금액 자동계산 제외"
+    }
+  ],
+  "links": [
+    [
+      "상품설명서(하나)",
+      "https://m.hanacard.co.kr/leaflet/13/13889_20251229.pdf"
+    ]
+  ],
+  "cautions": [
+    "해외 결제에 국내0.3%를 적용하지 않음",
+    "국내 원화 하나머니/해외 외화 하나머니 결제. 환전·환급은 하나머니 이용정책에 따름",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "navermoneyhana",
+  "name": "네이버페이 머니 하나 체크카드",
+  "short": "네이버머니 하나",
+  "issuer": "하나",
+  "kind": "체크",
+  "tiers": [
+    [
+      250000,
+      "월1만포인트"
+    ]
+  ],
+  "perfNote": "전월 국내외25만원. 해외 이용은 실적 포함. 세금·공과금·관리비·4대보험·학교납입금/등록금·상품권·기프트/선불 구매충전·임대료·ATM 제외. 전월1일~말일 국내외 일시불 승인 기준. 후불교통 접수월·취소 접수월 차감. 등록월~다음달25만원 조건 유예. 하나은행 결제계좌1.2%, 타행0.6%이며 연결계좌는 개인 설정.",
+  "perfExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "tax",
+    "utility",
+    "mgmt",
+    "insurance",
+    "tuition",
+    "university",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "rent",
+    "atm",
+    "canceled"
+  ],
+  "benefits": [
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "transit",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "mgmt",
+        "utility",
+        "tax",
+        "insurance",
+        "voucher",
+        "prepaid",
+        "tuition",
+        "rent",
+        "installment",
+        "giftcard",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "srt",
+        "expressbus",
+        "hipass",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "taxi",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "evcharge",
+        "languageSchool",
+        "citytransit",
+        "intercity",
+        "interestFree",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "prepaidcardcharge",
+        "ktxexpress",
+        "overseas",
+        "japanDonki",
+        "japanCvs",
+        "vietnamMart",
+        "vietnamGrab",
+        "usaStarbucks",
+        "overseasTransit",
+        "rail"
+      ],
+      "rate": 0.012,
+      "min": 0,
+      "cap": 10000,
+      "label": "국내외1.2% 네이버페이포인트",
+      "cond": "전월25만·월1만P·하나은행 결제계좌. 다른 은행0.6%·해외수수료별도"
+    }
+  ],
+  "links": [
+    [
+      "상품설명서(하나)",
+      "https://m.hanacard.co.kr/leaflet/13/13502_20220722.pdf"
+    ],
+    [
+      "최신 안내(네이버)",
+      "https://mkt.naver.com/naverdetails/point"
+    ]
+  ],
+  "cautions": [
+    "하나은행 계좌 연결1.2%, 타행0.6%. 개인 연결계좌는 조회하지 않음",
+    "신규 사용등록일~다음달말 실적 유예. 충전형 Npay 머니카드와 별개",
+    "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+}
 ];
 
 // ───────── 이벤트 (월 1회 갱신: "이번 달 이벤트 뭐 있어?" → AI가 조사해 채움) ─────────
 // {id, card:카드id, title, start:'YYYY-MM-DD', end:'YYYY-MM-DD', apply:true=응모필요, cats:[해당 카테고리], cond:'조건', reward:'보상', url}
 const EVENTS = [
+  {
+    "id": "soltravel-overseas-2026",
+    "card": "soltravel",
+    "cats": [
+      "japanCvs",
+      "vietnamMart",
+      "vietnamGrab",
+      "usaStarbucks"
+    ],
+    "start": "2026-10-08",
+    "end": "2026-12-31",
+    "title": "일본·베트남·미국 지정 가맹점 5%",
+    "apply": false,
+    "cond": "실적 무관·해당 국가 오프라인/공식 서비스. 일본3대편의점 월5천·베트남 롯데마트 월3천/Grab 월3천·미국 스타벅스 월5천. 등록일2026.10.08은 확인일이며 행사 시작일을 뜻하지 않음",
+    "reward": "5% 할인(월한도·잔여조건 적용)",
+    "url": "https://www.shinhancard.com/pconts/html/card/apply/check/1225714_2206.html"
+  }
 ];
 function activeEvents(){ const t=new Date(); t.setHours(0,0,0,0); return EVENTS.filter(e => new Date(e.start+'T00:00:00+09:00')<=t && new Date(e.end+'T23:59:59+09:00')>=t); }
 function evState(){ try{ return JSON.parse(localStorage.getItem('cf_ev')||'{}'); }catch(e){ return {}; } }
@@ -560,7 +3030,7 @@ function answer(){
     let pv, pcls, pd='';
     if(c.tiers[0][0]===0 && c.id==='tok'){ pv='무실적 카드'; pcls='muted'; pd='실적 신경 안 써도 됨'; }
     else if(r.perfNo.length){ pv='✗ 미인정'; pcls='bad'; pd=`${r.perfNo.map(k=>CATS[k].label).join(', ')}은 실적 제외`; }
-    else { pv='✓ 인정'; pcls='good'; pd = c.tiers[0][0]>0 ? `기준 ${Math.round(c.tiers[0][0]/10000)}만` : '주차 조건용 1건 카운트'; }
+    else { pv='✓ 인정'; pcls='good'; pd = c.tiers[0][0]>0 ? `기준 ${Math.round(c.tiers[0][0]/10000)}만` : (c.id==='rpm' ? '주차 조건용 1건 카운트' : '서비스별 조건은 카드 설명 참고'); }
     if(c.id==='mgs' && !r.perfNo.length) pd += cats.some(k=>PAY_CATS.includes(k)) ? ' · 간편결제 15만 쪽' : ' · 비간편결제 15만 쪽';
     const tags = [];
     if(c.expires){ const d=dday(c.expires); tags.push(`<span class="tag ${d<90?'warn':''}">만료 D-${d}</span>`); }
