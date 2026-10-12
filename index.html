@@ -288,6 +288,16 @@ const CATS = {
   canceled: {"label":"취소 매출","al":["매출취소","취소금액"]},
   prepaidcardcharge: {"label":"선불카드 충전","al":["선불카드충전"]},
   ktxexpress: {"label":"KTX·ITX·고속버스","al":["ktx","itx","고속버스"]},
+  ktbill: {"label":"KT 유·무선 통신료","al":["kt통신","kt요금","kt휴대폰","kt인터넷","kt자동납부","kt tv","케이티"]},
+  lgbill: {"label":"LG U+ 유·무선 통신료","al":["lg u+","lgu+","유플러스","엘지유플러스"]},
+  tossmobile: {"label":"토스모바일 통신료","al":["토스모바일","tossmobile"]},
+  sktbill: {"label":"SKT 통신료","al":["skt","sk텔레콤"]},
+  discounted: {"label":"해당 카드로 할인받은 결제금액 전체","al":["할인받은","할인적용건","할인적용된"]},
+  unauthorized: {"label":"무승인전표(자판기·터널통행료·기내)","al":["무승인","자판기","터널통행료","기내이용"]},
+  autoCashback: {"label":"오토·스마트 캐시백 신청금액","al":["오토캐시백","스마트캐시백"]},
+  publicFees: {"label":"벌금·과태료·민원수수료·인지세·송달료","al":["벌금","과태료","민원발급","인지세","송달료"]},
+  pointTopup: {"label":"포인트 충전","al":["포인트충전"]},
+  socialCharge: {"label":"장애인 고용부담금","al":["장애인고용부담금"]}
 };
 const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
 
@@ -2826,6 +2836,489 @@ const CARDS = [
     "하나은행 계좌 연결1.2%, 타행0.6%. 개인 연결계좌는 조회하지 않음",
     "신규 사용등록일~다음달말 실적 유예. 충전형 Npay 머니카드와 별개",
     "공식 원문 확인일2026.10.08. 조회 예상액은 표시된 실적·결제경로·횟수·잔여한도를 충족한 경우. 카드별 월 정액/수수료/구간별 혜택은 상세 설명 기준."
+  ]
+},
+{
+  "id": "localikit",
+  "name": "LOCA LIKIT",
+  "short": "(롯데카드) LOCA LIKIT",
+  "issuer": "롯데",
+  "kind": "신용",
+  "tiers": [
+    [
+      400000,
+      "커피·영화 각 월1만 / 교통·통신·배달 각 월5천"
+    ]
+  ],
+  "perfExclude": [
+    "tax",
+    "utility",
+    "insurance",
+    "mgmt",
+    "tuition",
+    "rent",
+    "socialCharge",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "transit",
+    "intercity",
+    "expressbus",
+    "taxi",
+    "hipass",
+    "unauthorized",
+    "publicFees",
+    "interestFree",
+    "autoCashback",
+    "loans",
+    "fees",
+    "discounted"
+  ],
+  "rewardExclude": [
+    "interestFree",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "tossmobile"
+  ],
+  "perfNote": "전월1일~말일 40만원 이상. 이 카드로 할인받은 거래는 할인액만이 아니라 결제금액 전체가 실적 제외. 상품권·선불카드 구매/충전·포인트충전·관리비·세금·공과금·4대보험·학교납입금·임대료·대중교통·택시·고속버스·통행료·무이자할부 등도 제외. 일반 미할인 매출과 유이자할부는 인정; 할부는 승인월 전체금액, 해외는 접수일, 취소는 원승인월에서 차감. 가족 실적·한도 합산.",
+  "benefits": [
+    {
+      "cats": [
+        "coffee"
+      ],
+      "rate": 0.5,
+      "min": 0,
+      "cap": 10000,
+      "label": "스타벅스 현장 50% · 할인 적용된 결제금액 전체 실적 제외",
+      "cond": "Pay 결제60%도 동일 월1만원. 조회는 현장 실물50% 기준; 입점매장 제외 가능·상품권/선불충전 제외. 발급 첫달 커피혜택 없음.",
+      "brands": [
+        "스타벅스",
+        "스벅"
+      ]
+    },
+    {
+      "cats": [
+        "movie"
+      ],
+      "rate": 0.5,
+      "min": 10000,
+      "cap": 10000,
+      "label": "롯데시네마·CGV 50% · 할인 적용 시 결제금액 전체 실적 제외",
+      "cond": "건당1만원↑·월1만원. 현장/공식앱·홈페이지 예매만.",
+      "brands": [
+        "롯데시네마",
+        "cgv"
+      ]
+    },
+    {
+      "cats": [
+        "citytransit"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 5000,
+      "label": "시내버스·지하철 10% · 실적 제외",
+      "cond": "월5천원; 시외/고속버스 제외"
+    },
+    {
+      "cats": [
+        "telecom",
+        "ktbill",
+        "lgbill",
+        "sktbill"
+      ],
+      "rate": 0.1,
+      "min": 0,
+      "cap": 5000,
+      "label": "SKT·KT·LG U+ 이동통신 자동납부 10% · 할인 거래 전체 실적 제외",
+      "cond": "월5천원. 알뜰폰·선불폰·인터넷/TV 결합요금 제외"
+    },
+    {
+      "cats": [
+        "delivery"
+      ],
+      "rate": 0.05,
+      "min": 0,
+      "cap": 5000,
+      "label": "배민·쿠팡이츠 5% · 할인 적용 시 결제금액 전체 실적 제외",
+      "cond": "월5천원·공식앱/웹 결제만. 배달원·매장 직접결제 제외.",
+      "brands": [
+        "배민",
+        "배달의민족",
+        "쿠팡이츠"
+      ]
+    }
+  ],
+  "links": [
+    [
+      "롯데카드 공식 상품안내·이용기준",
+      "https://www.lottecard.co.kr/app/LPCDADB_V100.lc?vtCdKndC=P13746-A13746"
+    ]
+  ],
+  "cautions": [
+    "자동 할인 여부는 기존 조회기가 판정하지 않음. 조회의 실적 인정은 미할인 거래 기준이며, 혜택 문구의 할인 거래 실적 제외 조건이 우선. 실제 할인 건을 조회할 때는 “할인받은 스타벅스 1.2만”처럼 입력하면 실적 미인정으로 표시.",
+    "간편결제60%는 스타벅스 현장 Pay 결제에 한정. 기존 계산기는 현장 실물50%로 보수적으로 조회; 카드 설명의60% 조건을 함께 확인.",
+    "연회비 국내/해외(MASTER)1만원. 신규 발급일~다음달말 영화·교통·통신·배달 실적유예(커피 제외).",
+    "공식 상품안내 확인일 2026.10.12. 사용자가 알려준 최초 발급 시기: 2026년 6월경. 조회 예상액은 전월 실적·자동납부·남은 월한도 충족을 전제로 함. 신규 가입 이벤트는 개인 참여 조건을 확인하지 않아 반영하지 않음."
+  ]
+},
+{
+  "id": "ktdcplus",
+  "name": "KT DC PLUS",
+  "short": "(롯데카드) KT DC PLUS",
+  "issuer": "롯데",
+  "kind": "신용",
+  "tiers": [
+    [
+      400000,
+      "KT 자동납부 월1만원"
+    ],
+    [
+      800000,
+      "KT 자동납부 월1만3천원"
+    ]
+  ],
+  "perfExclude": [
+    "tax",
+    "utility",
+    "insurance",
+    "mgmt",
+    "tuition",
+    "rent",
+    "socialCharge",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "transit",
+    "intercity",
+    "expressbus",
+    "taxi",
+    "hipass",
+    "unauthorized",
+    "publicFees",
+    "interestFree",
+    "autoCashback",
+    "loans",
+    "fees",
+    "government",
+    "canceled",
+    "ktbill"
+  ],
+  "rewardExclude": [
+    "interestFree",
+    "sktbill",
+    "lgbill",
+    "tossmobile"
+  ],
+  "perfNote": "전월40/80만원에 KT 유·무선 요금 자동납부 월1만/1만3천원. 2023.10.01 이후 발급자의 KT 요금(휴대폰·인터넷·TV·집전화·결합상품)은 실적 제외. 사용자2026년6월 발급이므로 해당. 상품권·선불구매/충전·관리비·세금·공과금·4대보험·학교·정부지원·임대료·교통·무이자할부 등 제외. 일반 미제외 매출·해외·유이자할부 인정. 할부 승인월 전액, 취소 원승인월 차감. 가족 실적·한도 합산.",
+  "benefits": [
+    {
+      "cats": [
+        "telecom",
+        "ktbill"
+      ],
+      "rate": 1,
+      "min": 0,
+      "cap": 10000,
+      "label": "KT 자동납부 월1만원 · KT 요금 실적 제외(2026.6 발급)",
+      "cond": "전월40만원↑ 기준 예상액=min(요금,1만원);80만원↑는월1만3천원. 즉시납부 제외; 잔여한도 이월 없음"
+    }
+  ],
+  "links": [
+    [
+      "롯데카드 공식 상품안내·이용기준",
+      "https://www.lottecard.co.kr/app/LPCDADB_V100.lc?vtCdKndC=P14445-A14445"
+    ]
+  ],
+  "cautions": [
+    "연회비 국내/해외(MASTER·AMEX)2만원; 가족카드 연회비 없음. 사용등록일~다음달말 월1만원 실적유예. 전월80만원↑는상위한도.",
+    "공식 상품안내 확인일 2026.10.12. 사용자가 알려준 최초 발급 시기: 2026년 6월경. 조회 예상액은 전월 실적·자동납부·남은 월한도 충족을 전제로 함. 신규 가입 이벤트는 개인 참여 조건을 확인하지 않아 반영하지 않음."
+  ]
+},
+{
+  "id": "localite",
+  "name": "LOCA Lite",
+  "short": "(롯데카드) LOCA Lite",
+  "issuer": "롯데",
+  "kind": "신용",
+  "tiers": [
+    [
+      0,
+      "국내외0.7% · 실적·한도 없음"
+    ]
+  ],
+  "perfExclude": [],
+  "rewardExclude": [
+    "tax",
+    "utility",
+    "insurance",
+    "mgmt",
+    "tuition",
+    "rent",
+    "socialCharge",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "transit",
+    "intercity",
+    "expressbus",
+    "taxi",
+    "hipass",
+    "unauthorized",
+    "publicFees",
+    "interestFree",
+    "autoCashback",
+    "loans",
+    "fees"
+  ],
+  "perfNote": "전월실적 조건과 할인한도 없음. 따라서 혜택 제외 대상을 실적 제외로 복사하지 않음. 상품권·선불구매/충전·관리비·세금·공과금·4대보험·학교·임대료·교통·무이자할부 등은0.7% 할인 제외. 유이자할부는 승인일 전액 할인, 해외결제 수수료 별도.",
+  "benefits": [
+    {
+      "cats": [
+        "coffee",
+        "naverpay",
+        "kakaopay",
+        "payco",
+        "tosspay",
+        "otherpay",
+        "kbpay",
+        "samsungpay",
+        "online",
+        "fuel",
+        "parking",
+        "telecom",
+        "movie",
+        "dining",
+        "park",
+        "ott",
+        "delivery",
+        "dept",
+        "cvs",
+        "overseas",
+        "installment",
+        "airline",
+        "dutyfree",
+        "inflightDutyfree",
+        "university",
+        "government",
+        "expressbusApp",
+        "general",
+        "rail",
+        "srt",
+        "books",
+        "bakery",
+        "mart",
+        "supermarket",
+        "medical",
+        "hotel",
+        "leisure",
+        "homeshopping",
+        "fastfood",
+        "exams",
+        "px",
+        "militaryResort",
+        "japanDonki",
+        "japanCvs",
+        "vietnamMart",
+        "vietnamGrab",
+        "usaStarbucks",
+        "overseasTransit",
+        "evcharge",
+        "languageSchool",
+        "solpay",
+        "ssgpay",
+        "citytransit",
+        "water",
+        "electricgas",
+        "chinavisa",
+        "ktxexpress",
+        "ktbill",
+        "lgbill",
+        "tossmobile",
+        "sktbill"
+      ],
+      "rate": 0.007,
+      "min": 0,
+      "cap": 0,
+      "label": "국내외 가맹점 0.7% · 무실적·무한도",
+      "cond": "할인 제외 항목은 별도 확인. 유이자할부 포함·다른 청구할인 중 큰 혜택 적용."
+    }
+  ],
+  "links": [
+    [
+      "롯데카드 공식 상품안내·이용기준",
+      "https://www.lottecard.co.kr/app/LPCDADB_V100.lc?vtCdKndC=P13490-A13490"
+    ]
+  ],
+  "cautions": [
+    "연회비 국내/해외(MASTER·AMEX)1천원; 가족카드 면제. 롯데카드 자체 L.POINT 적립 없음.",
+    "실적 인정 표시는 기존 조회기의 일반 표시이며, 이 카드에는 충족할 전월 실적 자체가 없음.",
+    "공식 상품안내 확인일 2026.10.12. 사용자가 알려준 최초 발급 시기: 2026년 6월경. 조회 예상액은 전월 실적·자동납부·남은 월한도 충족을 전제로 함. 신규 가입 이벤트는 개인 참여 조건을 확인하지 않아 반영하지 않음."
+  ]
+},
+{
+  "id": "tossmobileloca",
+  "name": "Toss Mobile x LOCA",
+  "short": "(롯데카드) Toss Mobile x LOCA",
+  "issuer": "롯데",
+  "kind": "신용",
+  "tiers": [
+    [
+      300000,
+      "발급월포함1~24개월 월1만원 /25개월부터7천원"
+    ],
+    [
+      700000,
+      "1~24개월 월1만5천원 /이후7천원"
+    ],
+    [
+      1500000,
+      "1~24개월 월2만원 /이후7천원"
+    ]
+  ],
+  "perfExclude": [
+    "tax",
+    "utility",
+    "insurance",
+    "mgmt",
+    "tuition",
+    "rent",
+    "socialCharge",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "transit",
+    "intercity",
+    "expressbus",
+    "taxi",
+    "hipass",
+    "unauthorized",
+    "publicFees",
+    "interestFree",
+    "autoCashback",
+    "loans",
+    "fees",
+    "government",
+    "canceled"
+  ],
+  "rewardExclude": [
+    "interestFree",
+    "ktbill",
+    "lgbill",
+    "sktbill"
+  ],
+  "perfNote": "토스모바일 자동납부. 전월30/70/150만원에 발급월포함1~24개월 월1만/1만5천/2만원;25개월부터 모두7천원(전월30만원↑). 2026년6월 발급 기준2028년5월까지 초기구간,2028년6월부터7천원. 할인받은 토스모바일 통신료는 실적 제외 목록에 없어 실적 인정. 상품권·선불구매/충전·관리비·공과금·세금·4대보험·학교·정부지원·임대료·교통·무이자할부 등 제외. 할부 승인월 전액, 해외 접수일, 취소 원승인월 차감.",
+  "benefits": [
+    {
+      "cats": [
+        "telecom",
+        "tossmobile"
+      ],
+      "rate": 1,
+      "min": 0,
+      "cap": 10000,
+      "label": "토스모바일 자동납부 월1만원 · 통신료 실적 인정",
+      "cond": "2026.6발급 초기24개월·전월30만원↑ 기준;70만1.5만/150만2만원.2028.6부터7천원. 즉시결제 제외"
+    }
+  ],
+  "links": [
+    [
+      "롯데카드 공식 상품안내·이용기준",
+      "https://www.lottecard.co.kr/app/LPCDADB_V100.lc?vtCdKndC=P14447-A14447"
+    ]
+  ],
+  "cautions": [
+    "연회비 국내/MASTER2만원; 가족 발급 불가. 사용등록일~다음달말1만원 실적유예. 통신료가 한도보다 적으면 요금만큼 할인.",
+    "공식 상품안내 확인일 2026.10.12. 사용자가 알려준 최초 발급 시기: 2026년 6월경. 조회 예상액은 전월 실적·자동납부·남은 월한도 충족을 전제로 함. 신규 가입 이벤트는 개인 참여 조건을 확인하지 않아 반영하지 않음."
+  ]
+},
+{
+  "id": "lguloca",
+  "name": "LG U+ X LOCA",
+  "short": "(롯데카드) LG U+ X LOCA",
+  "issuer": "롯데",
+  "kind": "신용",
+  "tiers": [
+    [
+      300000,
+      "발급월포함25개월까지1만원 /이후6천원"
+    ],
+    [
+      700000,
+      "25개월까지1만5천원 /이후8천원"
+    ],
+    [
+      1200000,
+      "25개월까지2만원 /이후1만원"
+    ]
+  ],
+  "perfExclude": [
+    "tax",
+    "utility",
+    "insurance",
+    "mgmt",
+    "tuition",
+    "rent",
+    "socialCharge",
+    "voucher",
+    "giftcard",
+    "prepaid",
+    "prepaidcardcharge",
+    "pointTopup",
+    "transit",
+    "intercity",
+    "expressbus",
+    "taxi",
+    "hipass",
+    "unauthorized",
+    "publicFees",
+    "interestFree",
+    "autoCashback",
+    "loans",
+    "fees",
+    "discounted"
+  ],
+  "rewardExclude": [
+    "interestFree",
+    "ktbill",
+    "sktbill",
+    "tossmobile"
+  ],
+  "perfNote": "LG U+ 유·무선 요금 자동납부. 전월30/70/120만원에 발급월포함25개월까지 월1만/1만5천/2만원;26개월부터6천/8천/1만원.2026년6월발급 기준2028년6월까지 초기구간,2028년7월부터후기구간. 이 카드로 할인받은 결제금액 전체 실적 제외. 상품권·선불구매/충전·관리비·세금·공과금·4대보험·학교·임대료·교통·무이자할부 등 제외. 유이자할부 승인월 전액;취소 원승인월 차감.",
+  "benefits": [
+    {
+      "cats": [
+        "telecom",
+        "lgbill"
+      ],
+      "rate": 1,
+      "min": 0,
+      "cap": 10000,
+      "label": "LG U+ 자동납부 월1만원 · 할인 적용된 결제금액 전체 실적 제외",
+      "cond": "2026.6발급·전월30만원↑ 기준;70만1.5만/120만2만원.2028.7부터6천/8천/1만원. 할인받은 요금은 실적 제외"
+    }
+  ],
+  "links": [
+    [
+      "롯데카드 공식 상품안내·이용기준",
+      "https://www.lottecard.co.kr/app/LPCDADB_V100.lc?vtCdKndC=P14073-A14073"
+    ]
+  ],
+  "cautions": [
+    "기존 조회의 실적 인정 표시는 미할인 거래 기준. 할인 거래는 “할인받은 LG U+ 통신요금”으로 조회하면 실적 미인정 표시.",
+    "연회비 국내/MASTER·AMEX2만원; 가족 발급 불가. 최초발급일~다음달말1만원 실적유예;전월70/120만원 충족 시 상위한도.",
+    "공식 상품안내 확인일 2026.10.12. 사용자가 알려준 최초 발급 시기: 2026년 6월경. 조회 예상액은 전월 실적·자동납부·남은 월한도 충족을 전제로 함. 신규 가입 이벤트는 개인 참여 조건을 확인하지 않아 반영하지 않음."
   ]
 }
 ];
