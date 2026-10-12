@@ -296,7 +296,7 @@ const PAY_CATS = ['naverpay','kakaopay','payco','tosspay','otherpay'];
 // benefits[].min: 건당 최소금액, cap: 월 한도(원), rate: 비율(0.2=20%) 또는 fn
 const CARDS = [
   {
-    id:'unimilecheck', links:[['상품안내(우리)','https://m.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=838011'],['상품공시실(우리·2025.06 설명서)','https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?cardGdsNo=838011&exec=cardDetail']], name:'우리 카드의정석 UniMile CHECK', short:'유니마일 체크', issuer:'우리', kind:'체크',
+    id:'unimilecheck', links:[['상품안내(우리)','https://m.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=838011'],['상품공시실(우리·2025.06 설명서)','https://m.wooricard.com/dcmw/yh1/cct/cct11/prdntc/M1CCT211S09_1.do'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?cardGdsNo=838011&exec=cardDetail']], name:'우리 카드의정석 UniMile CHECK', short:'(우리카드) 유니마일 체크', issuer:'우리', kind:'체크',
     tiers:[[300000,'기본·특별적립 / 라운지']],
     perfNote:'전월 국내 가맹점 30만원 이상. 해외가맹점 이용금액·수수료·이자만 실적 제외. 국내 관리비·세금·상품권 구매·선불충전은 실적 포함. 교통·통신 자동납부는 매출표 접수월 기준. 취소금액 차감.',
     perfExclude:['overseas'],
@@ -310,7 +310,7 @@ const CARDS = [
     cautions:['공식 상품설명서 2025.06 기준. 신규발급 중단(2024.03.01), 연회비 없음','1 UniMile = 1원. 건별 1점 미만 절사(조회액은 반올림한 근사치)','특별적립은 L.Pay·스마일페이·PAYCO·카카오페이·토스페이·네이버페이·SSG pay·티몬페이·11pay·쿠페이·인터파크페이 경유 시 불가. 조회는 결제경로를 자동 판별하지 않으므로 특별적립 표시 조건을 반드시 확인','특별적립 월 5만점은 항공·해외·면세 통합. 조회는 누적 사용액과 공유한도 소진을 자동 계산하지 않음','기내면세점은 1% 특별적립 제외. 해외로 매입되는 경우 국내 기본적립도 대상 아님(확인)','상품권 구매 자체는 설명서 적립제외 목록에 별도 명시 없음. 기프트카드·선불카드 구매/충전과 모바일 교통카드 충전은 적립 제외. 모두 국내 이용 시 실적 포함','국내외 공항라운지: UnionPay만, 본인 월 1회·연 2회, 전월 국내 30만↑, THE LOUNGE 앱 이용. 국내전용 BC 불가','카드 등록일부터 다음달 말일까지 적립 실적 유예. 라운지는 이 기간에도 국내 30만 이용 후 다음날부터 제공','WON트래블VIP 시그니처 해외여행상품 5% 할인 가격: 전용 홈페이지 사전 예약·결제, 실적·횟수 제한 없음'],
   },
   {
-    id:'mgs', links:[['상품안내(하나)','https://m.hanacard.co.kr/MGINTROM.web?CD_PD_SEQ=18590'],['상품설명서 PDF','https://qpay.hanacard.co.kr/leaflet/15/15417_20250616.pdf'],['나무위키 정리','https://namu.wiki/w/MG+%20S%20%ED%95%98%EB%82%98%EC%B9%B4%EB%93%9C']], name:'MG+S 하나카드', short:'MG+S', issuer:'하나(MG)', kind:'신용',
+    id:'mgs', links:[['상품안내(하나)','https://m.hanacard.co.kr/MGINTROM.web?CD_PD_SEQ=18590'],['상품설명서 PDF','https://qpay.hanacard.co.kr/leaflet/15/15417_20250616.pdf'],['나무위키 정리','https://namu.wiki/w/MG+%20S%20%ED%95%98%EB%82%98%EC%B9%B4%EB%93%9C']], name:'MG+S 하나카드', short:'(하나카드) MG+S', issuer:'하나(MG)', kind:'신용',
     tiers:[[300000,'통합 1.5만'],[600000,'통합 3만'],[1000000,'통합 6만']],
     perfNote:'할인받은 금액도 실적 포함. 일부 정리글에 "실적 절반(15만)은 간편결제, 절반은 비간편결제" 조건이 있으나 공식 설명서엔 없음(확인).',
     perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid','rent'],
@@ -322,7 +322,7 @@ const CARDS = [
     cautions:['통합할인한도는 전월실적 구간에 따름(1.5만/3만/6만)','삼성페이 단독 결제는 간편결제 할인 대상 아님(설명서 기준: 네이버·카카오·토스·SSG·11pay·스마일페이만)'],
   },
   {
-    id:'more1', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한은행 더모아 · 26.12 만료', short:'은행 더모아', issuer:'신한', kind:'신용', expires:'2026-12-31',
+    id:'more1', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한은행 더모아 · 26.12 만료', short:'(신한카드) 은행 더모아', issuer:'신한', kind:'신용', expires:'2026-12-31',
     tiers:[[300000,'적립 제공']],
     perfNote:'전월 30만 조건(확인). 5,000원 이상 결제만, 동일 가맹점 하루 1회.',
     perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid'],
@@ -334,7 +334,7 @@ const CARDS = [
     cautions:['통신 특별적립은 통신요금 자동이체가 더모아에 걸려 있을 때만 — 현재 타 카드에 걸려 있어 해당 없음','선불충전·상품권은 PG 경유여도 적립 제외, 사후 회수 가능'],
   },
   {
-    id:'more2', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한금투 더모아 · 27.1 만료', short:'금투 더모아', issuer:'신한', kind:'신용', expires:'2027-01-31',
+    id:'more2', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1198942_2207.html'],['토스 카드라운지','https://card-lounge.toss.im/card/1251']], name:'신한금투 더모아 · 27.1 만료', short:'(신한카드) 금투 더모아', issuer:'신한', kind:'신용', expires:'2027-01-31',
     tiers:[[300000,'적립 제공']],
     perfNote:'은행 더모아와 동일 규칙. 두 장은 별개 카드라 각자 실적·하루 1회 카운트.',
     perfExclude:['tax','utility','mgmt','insurance','tuition','voucher','giftcard','prepaid'],
@@ -346,7 +346,7 @@ const CARDS = [
     cautions:['은행 더모아가 만료되면 특별가맹점 하루 1회 카운트가 이 카드 한 장으로 줄어듦'],
   },
   {
-    id:'rpm', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1188292_2207.html'],['무료주차장 목록','https://pprain.com/43']], name:'신한 RPM Platinum# (구RPM)', short:'구RPM', issuer:'신한', kind:'신용',
+    id:'rpm', links:[['상품안내(신한)','https://www.shinhancard.com/pconts/html/card/apply/credit/1188292_2207.html'],['무료주차장 목록','https://pprain.com/43']], name:'신한 RPM Platinum# (구RPM)', short:'(신한카드) 구RPM', issuer:'신한', kind:'신용',
     tiers:[[0,'주유·주차 무실적'],[500000,'특별적립 1%'],[1000000,'특별적립 3%'],[1500000,'특별적립 5%']],
     perfNote:'주유 적립은 무실적. 무료주차는 전월에 이 카드로 1건 이상 결제해야 제공. 실적제외가 현금서비스·카드론·연회비·수수료·이자·선불카드 충전뿐 — 상품권 구매·세금·공과금·관리비는 실적 인정(옛 약관).',
     perfExclude:['prepaid'],
@@ -358,7 +358,7 @@ const CARDS = [
     cautions:['주유 외 일반적립 0.2~2%는 다른 카드가 더 유리','적립 제외: 무이자·슬림할부, 지방세, 수도요금, 선불충전, 할인서비스 적용 금액 (국세는 적립 가능)'],
   },
   {
-    id:'naeun', links:[['상품안내(새마을금고)','https://mgcheck.kfcc.co.kr/pers/appl/persTheNaeunGuid.do']], name:'MG 더나은 체크카드', short:'더나은', issuer:'새마을금고', kind:'체크',
+    id:'naeun', links:[['상품안내(새마을금고)','https://mgcheck.kfcc.co.kr/pers/appl/persTheNaeunGuid.do']], name:'MG 더나은 체크카드', short:'(새마을금고) 더나은', issuer:'새마을금고', kind:'체크',
     tiers:[[300000,'영역별 6천 ×3']],
     perfNote:'실적제외가 해외·소액신용결제(후불교통)뿐. 관리비·공과금·통신·상품권·세금도 실적 인정. 캐시백 받은 건도 실적 포함.',
     perfExclude:['overseas','transit'],
@@ -371,7 +371,7 @@ const CARDS = [
     cautions:['영역별 한도가 독립이라 3영역 각각 6천까지 먹을 것','비대면 신규발급 중단 — 재발급·유효기간 챙기기'],
   },
   {
-    id:'tok', links:[['카드고릴라 상세','https://m.card-gorilla.com/card/detail/2377'],['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000092'],['KB국민카드 상품안내','https://card.kbcard.com/CXPRICAC0076.cms?mainCC=a&cooperationcode=09272']], name:'KB국민 톡톡 my point', short:'톡마포', issuer:'KB국민', kind:'신용',
+    id:'tok', links:[['카드고릴라 상세','https://m.card-gorilla.com/card/detail/2377'],['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000092'],['KB국민카드 상품안내','https://card.kbcard.com/CXPRICAC0076.cms?mainCC=a&cooperationcode=09272']], name:'KB국민 톡톡 my point', short:'(KB국민카드) 톡마포', issuer:'KB국민', kind:'신용',
     tiers:[[0,'무실적']],
     perfNote:'무실적. KB Pay 월 20만원이 5% 적립 효율 최대(한도 1만점). KB Pay 연 300만 넘기면 12,000점 추가.',
     perfExclude:[],
@@ -383,7 +383,7 @@ const CARDS = [
     cautions:['오프라인은 KB Pay(삼성페이 되는 곳) 결제여야 5%','연 300만 리워드는 발급월 기준 1년 집계'],
   },
   {
-    id:'nara', links:[['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000108'],['KB 제휴혜택 안내','https://m.kbcard.com/CXHIABNC0026.cms?evntSerno=269162'],['나무위키 나라사랑카드/2기','https://namu.wiki/w/%EB%82%98%EB%9D%BC%EC%82%AC%EB%9E%91%EC%B9%B4%EB%93%9C/2%EA%B8%B0']], name:'KB국민 나라사랑카드(체크)', short:'나사카', issuer:'KB국민', kind:'체크',
+    id:'nara', links:[['뱅크샐러드','https://www.banksalad.com/product/cards/CARD000108'],['KB 제휴혜택 안내','https://m.kbcard.com/CXHIABNC0026.cms?evntSerno=269162'],['나무위키 나라사랑카드/2기','https://namu.wiki/w/%EB%82%98%EB%9D%BC%EC%82%AC%EB%9E%91%EC%B9%B4%EB%93%9C/2%EA%B8%B0']], name:'KB국민 나라사랑카드(체크)', short:'(KB국민카드) 나사카', issuer:'KB국민', kind:'체크',
     tiers:[[100000,'통합 5천'],[200000,'통합 1만'],[300000,'통합 2만'],[500000,'통합 3만'],[1000000,'통합 5만']],
     perfNote:'대중교통 이용금액은 실적에 안 들어감. 해외·정부지원도 제외. 영역별 요구 실적(8만/20만/25만)은 확인 필요.',
     perfExclude:['transit','overseas'],
@@ -400,7 +400,7 @@ const CARDS = [
     cautions:['통합할인한도라 교통 20%가 한도를 먼저 먹으면 스벅 할인이 안 나올 수 있음'],
   },
   {
-    id:'sktw', links:[['상품안내(우리)','https://nm.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=228028'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?exec=cardDetail&cardGdsNo=228028']], name:'SKT 우리카드', short:'SKT우리', issuer:'우리', kind:'신용',
+    id:'sktw', links:[['상품안내(우리)','https://nm.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=228028'],['BC카드 상세','https://m.bccard.com/app/mobileweb/CardDetail.do?exec=cardDetail&cardGdsNo=228028']], name:'SKT 우리카드', short:'(우리카드) SKT우리', issuer:'우리', kind:'신용',
     tiers:[[300000,'통신 1만'],[700000,'통신 1.5만'],[1000000,'통신 2만']],
     perfNote:'실적제외가 무이자할부·국세·지방세·관세·해외·카드대출·수수료·연회비뿐. 상품권·관리비·공과금 실적 인정. 현재 30만 구간(통신 1만)으로 운용.',
     perfExclude:['installment','tax','overseas'],
@@ -417,7 +417,7 @@ const CARDS = [
 {
   "id": "woorivrail",
   "name": "우리V카드-철도마일리지(영업점)",
-  "short": "우리V 철도",
+  "short": "(우리카드) 우리V 철도",
   "issuer": "우리",
   "kind": "신용",
   "tiers": [
@@ -600,7 +600,7 @@ const CARDS = [
 {
   "id": "woorioneatm",
   "name": "우리ONE 체크카드(국제 ATM)",
-  "short": "우리ONE ATM",
+  "short": "(우리카드) 우리ONE ATM",
   "issuer": "우리",
   "kind": "체크",
   "tiers": [
@@ -748,7 +748,7 @@ const CARDS = [
 {
   "id": "kdbchoice",
   "name": "KDB CHOICE 체크카드",
-  "short": "KDB CHOICE",
+  "short": "(KDB산업은행) KDB CHOICE",
   "issuer": "KDB산업은행",
   "kind": "체크",
   "tiers": [
@@ -826,7 +826,7 @@ const CARDS = [
 {
   "id": "wowri",
   "name": "우리 카드의정석 WOWRI",
-  "short": "WOWRI",
+  "short": "(우리카드) WOWRI",
   "issuer": "우리",
   "kind": "신용",
   "tiers": [
@@ -1041,7 +1041,7 @@ const CARDS = [
 {
   "id": "alwayson",
   "name": "Always On 신한카드",
-  "short": "Always On",
+  "short": "(신한카드) Always On",
   "issuer": "신한",
   "kind": "신용",
   "tiers": [
@@ -1122,7 +1122,7 @@ const CARDS = [
 {
   "id": "globalplus",
   "name": "Global + 신한카드 체크",
-  "short": "Global+ 체크",
+  "short": "(신한카드) Global+ 체크",
   "issuer": "신한",
   "kind": "체크",
   "tiers": [
@@ -1292,7 +1292,7 @@ const CARDS = [
 {
   "id": "hipasscredit",
   "name": "후불하이패스 + 신한카드",
-  "short": "신한 후불하이패스+",
+  "short": "(신한카드) 신한 후불하이패스+",
   "issuer": "신한",
   "kind": "신용",
   "tiers": [
@@ -1486,7 +1486,7 @@ const CARDS = [
 {
   "id": "hipasscheck",
   "name": "하이패스(체크) 신한카드",
-  "short": "신한 하이패스 체크",
+  "short": "(신한카드) 신한 하이패스 체크",
   "issuer": "신한",
   "kind": "체크",
   "tiers": [
@@ -1680,7 +1680,7 @@ const CARDS = [
 {
   "id": "soltripj",
   "name": "SOL트립앤J(체크) 신한카드",
-  "short": "SOL트립앤J",
+  "short": "(신한카드) SOL트립앤J",
   "issuer": "신한",
   "kind": "체크",
   "tiers": [
@@ -1784,7 +1784,7 @@ const CARDS = [
 {
   "id": "shnara",
   "name": "나라사랑(체크) 신한카드",
-  "short": "신한 나라사랑",
+  "short": "(신한카드) 신한 나라사랑",
   "issuer": "신한",
   "kind": "체크",
   "tiers": [
@@ -2060,7 +2060,7 @@ const CARDS = [
 {
   "id": "soltravel",
   "name": "SOL트래블(체크) 신한카드",
-  "short": "SOL트래블",
+  "short": "(신한카드) SOL트래블",
   "issuer": "신한",
   "kind": "체크",
   "tiers": [
@@ -2153,7 +2153,7 @@ const CARDS = [
 {
   "id": "hananara",
   "name": "하나 나라사랑카드(체크)",
-  "short": "하나 나라사랑",
+  "short": "(하나카드) 하나 나라사랑",
   "issuer": "하나",
   "kind": "체크",
   "tiers": [
@@ -2433,7 +2433,7 @@ const CARDS = [
 {
   "id": "travelgo",
   "name": "트래블GO 체크카드 하나카드",
-  "short": "트래블GO",
+  "short": "(하나카드) 트래블GO",
   "issuer": "하나",
   "kind": "체크",
   "tiers": [
@@ -2563,7 +2563,7 @@ const CARDS = [
 {
   "id": "travellog",
   "name": "트래블로그 체크카드 하나카드",
-  "short": "트래블로그",
+  "short": "(하나카드) 트래블로그",
   "issuer": "하나",
   "kind": "체크",
   "tiers": [
@@ -2692,7 +2692,7 @@ const CARDS = [
 {
   "id": "navermoneyhana",
   "name": "네이버페이 머니 하나 체크카드",
-  "short": "네이버머니 하나",
+  "short": "(하나카드) 네이버머니 하나",
   "issuer": "하나",
   "kind": "체크",
   "tiers": [
