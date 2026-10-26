@@ -6,6 +6,8 @@
 - 1부: 기록 앱 — `life/index.html` (GitHub Pages: https://cleandwh.github.io/cardfolio/life/), LLM 없이 완결
 - 2부: LLM 서버 — 안 쓰는 갤럭시 폰(Termux + Qwen), 메인 폰에서 Tailscale로 접속
 
+> **변경(2026-10-26):** 저장 위치와 LLM 연결은 `hub/DESIGN.md`(노트20 허브 구조)를 따른다. 이 문서의 2장(기록 종류·화면)은 유효, 1장 구조도와 3장(LLM 연결)은 대체됨.
+
 ---
 
 ## 1. 전체 구조
