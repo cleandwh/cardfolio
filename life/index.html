@@ -7,6 +7,10 @@
 <meta name="referrer" content="no-referrer">
 <!-- 개인 데이터가 밖으로 나가지 않도록 브라우저 차원에서 외부 연결 차단 (같은 출처만 허용) -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#2e6b5a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>라이프 기록</title>
 <style>
 /* 레이아웃: 모바일 1열(360px 기준) → 상단 제목 → 탭 화면 → 하단 탭 */
@@ -573,7 +577,9 @@ function renderSearchResults() {
 }
 
 /* ---------- 설정 ---------- */
-let installEvt = null;
+let installEvt = null, swReady = false, swFail = '';
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const offlineState = () => swReady ? '준비됨 ✓' : swFail ? esc(swFail) : '준비 중… (처음 한 번은 인터넷 연결 필요)';
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (ui.tab === 'settings') render(); });
 function viewSettings() {
   const due = backupDue();
@@ -583,6 +589,14 @@ function viewSettings() {
       <div class="kv" style="margin-top:8px"><span>마지막 백업</span><b${due ? ' class="neg"' : ''}>${last}</b></div>
       <div class="row" style="margin-top:10px"><button class="btn pri" data-act="backup-out">백업 내보내기</button><button class="btn" data-act="backup-in">백업 가져오기</button></div>
       <input type="file" id="backup-file" accept=".json,application/json" hidden></div>
+    <h2>재무 대시보드에서 카드 가져오기</h2>
+    <div class="card"><div class="sub">재무 대시보드(<code>finance/</code>)에서 내려받은 백업 파일(.json)을 고르면, 거래·구독에 쓰인 결제수단 이름을 카드 후보로 보여드려요. 고른 것만 카드 기록에 <b>추가</b>되고 기존 기록은 지워지지 않아요.</div>
+      <button class="btn block" data-act="fin-in">재무 대시보드 백업 가져오기</button>
+      <input type="file" id="fin-file" accept=".json,application/json" hidden></div>
+    <h2>앱 설치 · 오프라인</h2>
+    <div class="card"><div class="kv"><span>오프라인 사용</span><b>${offlineState()}</b></div>
+      <div class="kv"><span>홈 화면 설치</span><b>${isStandalone() ? '설치됨' : '아직'}</b></div>
+      ${isStandalone() ? '' : `<div class="sub" style="margin-top:8px">Chrome 오른쪽 위 메뉴(⋮) → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 앱처럼 쓸 수 있어요.</div>${installEvt ? '<button class="btn pri block" data-act="install">홈 화면에 설치</button>' : ''}`}</div>
     <h2>데이터 현황</h2>
     <div class="card">${STORES.map(k => `<div class="kv"><span>${REG_LABEL[k]}</span><b>${D[k].length}${k === 'people' ? '명' : '건'}</b></div>`).join('')}</div>
     <h2>전체 삭제</h2>
@@ -611,6 +625,27 @@ async function importBackup(file) {
   await setMeta('lastBackup', todayStr());
   render(); toast('백업을 가져왔어요.');
 }
+/* ---------- 재무 대시보드 백업 → 카드 후보 ---------- */
+// finance/index.html 백업 형식: { schema:1, transactions:[{method,type,...}], subscriptions:[{method,...}], ... } (결제수단 = method)
+const NOT_CARD_RE = /계좌|통장|예금|적금|현금|입출금|증권|보험|대출|청약/;
+const nameKey = n => String(n).replace(/\s+/g, '').toLowerCase();
+let finCands = [];
+async function importFinance(file) {
+  let obj;
+  try { obj = JSON.parse(await readFileText(file)); } catch (e) { toast('JSON 파일을 읽지 못했어요.'); return; }
+  if (!obj || typeof obj !== 'object' || obj.schema !== 1 || !Array.isArray(obj.transactions) || !Array.isArray(obj.subscriptions)) { toast('재무 대시보드의 백업 파일이 아니에요.'); return; }
+  const m = new Map();
+  const add = (name, kind, exp) => { name = String(name || '').trim(); if (!name) return; const k = nameKey(name), x = m.get(k) || { name, tx: 0, sub: 0, exp: 0 }; x[kind]++; if (exp) x.exp++; m.set(k, x); };
+  obj.transactions.forEach(t => add(t && t.method, 'tx', t && t.type === 'expense'));
+  obj.subscriptions.forEach(t => add(t && t.method, 'sub', true));
+  const have = new Set(D.cards.map(c => nameKey(c.name)));
+  finCands = [...m.entries()].map(([k, x]) => ({ ...x, key: k, exists: have.has(k) })).sort((a, b) => (b.tx + b.sub) - (a.tx + a.sub));
+  if (!finCands.length) { toast('가져올 결제수단 이름이 없어요.'); return; }
+  openSheet(`<h3>카드로 가져올 항목 선택</h3><div class="sub">백업 파일의 결제수단 ${finCands.length}개예요. 지출에 쓰인 결제수단은 미리 체크해 두었어요. <b>카드가 아닌 것(계좌·현금 등)은 체크를 빼 주세요.</b> 연회비·갱신월은 가져온 뒤 카드 화면에서 입력하세요.</div>
+    <div class="card" style="padding:4px 16px">${finCands.map((c, i) => `<label class="chk li" style="cursor:pointer;margin:0"><span style="display:flex;gap:10px;align-items:center;min-width:0"><input type="checkbox" data-fin="${i}"${c.exists ? ' disabled' : c.exp && !NOT_CARD_RE.test(c.name) ? ' checked' : ''}><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</b><span class="sub">거래 ${c.tx}건 · 구독 ${c.sub}개</span></span></span>${c.exists ? '<span class="badge">이미 있음</span>' : ''}</label>`).join('')}</div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="fin-add">선택한 항목 카드로 추가</button><button class="btn" data-act="close">취소</button></div>`);
+}
+
 const REG_LABEL = { people: '사람', events: '경조사', items: '물품', cards: '카드', memos: '메모' };
 
 /* ============================================================
@@ -670,6 +705,14 @@ Object.assign(actions, {
   close: () => closeSheet(),
   'backup-out': exportBackup,
   'backup-in': () => $('#backup-file').click(),
+  'fin-in': () => $('#fin-file').click(),
+  'fin-add': async () => {
+    const picked = [...document.querySelectorAll('[data-fin]:checked')].map(b => finCands[+b.dataset.fin]);
+    if (!picked.length) { toast('추가할 항목을 선택해 주세요.'); return; }
+    for (const c of picked) await put('cards', { id: uid(), name: c.name, fee: 0, renewMonth: '', memo: '재무 대시보드에서 가져옴' });
+    closeSheet(); ui.tab = 'records'; ui.seg = 'card'; render(); toast(`카드 ${picked.length}장을 추가했어요.`);
+  },
+  install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { /* 무시 */ } installEvt = null; render(); },
   snooze: () => { const d = new Date(Date.now() + 7 * 86400000); setMeta('snoozeUntil', fmtDate(d)); render(); toast('일주일 뒤에 다시 알려드릴게요.'); },
   wipe: async () => {
     if (!await ask('전체 삭제', '경조사, 사람 등 경조사·물품·카드·메모 등 모든 기록이 삭제됩니다.<br>먼저 백업을 내려받으셨나요?', '계속', true, '삭제')) return;
@@ -684,12 +727,17 @@ document.addEventListener('input', e => { if (e.target.id === 'sq') { ui.sq = e.
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'sfrom' || t.id === 'sto') { ui[t.id === 'sfrom' ? 'sFrom' : 'sTo'] = t.value; render(); }
+  if (t.id === 'fin-file' && t.files[0]) { importFinance(t.files[0]); t.value = ''; }
   if (t.id === 'backup-file' && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
 });
 
 (async function init() {
   await loadAll();
   render();
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') { // 오프라인 사용 준비
+    navigator.serviceWorker.register('sw.js').catch(() => { swFail = '이 브라우저에서는 사용할 수 없어요'; });
+    navigator.serviceWorker.ready.then(() => { swReady = true; if (ui.tab === 'settings' && !sheetEl) render(); }).catch(() => {});
+  } else swFail = '이 브라우저에서는 사용할 수 없어요';
 })();
 </script>
 </body>

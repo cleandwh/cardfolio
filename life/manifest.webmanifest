@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "라이프 기록",
+  "short_name": "라이프",
+  "description": "경조사·구매 물품·카드·메모를 내 폰에만 기록하는 개인 비서",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f6f4",
+  "theme_color": "#2e6b5a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
