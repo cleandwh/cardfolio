@@ -43,7 +43,7 @@ label.chk{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:15px
 .card.hl{border-color:var(--warn);background:var(--warn-soft)}
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
+.btn{white-space:nowrap;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
 .btn:hover,.btn:focus-visible{border-color:var(--accent);outline:none}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 .btn.bad{color:var(--bad);border-color:var(--bad)}
@@ -285,7 +285,7 @@ function viewSubs() {
   }).join('');
   return `<div class="card"><div class="sub">활성 구독 ${on.length}개 · 월 환산 합계</div>
       <div class="big">${won(mSum)}원</div><div class="sub">연 합계 ${won(ySum)}원</div></div>
-    <!--@@SUGGEST@@-->
+    ${suggestHtml()}
     <button class="btn pri block" data-act="sub-add">+ 구독·고정지출 추가</button>
     ${items || '<div class="empty">등록된 구독이 없어요.<br>위 버튼으로 추가하세요.</div>'}`;
 }
@@ -336,7 +336,129 @@ function subForm(sub) {
 /* ============================================================
    화면: 홈 / 내역 / 계산기 (이후 단계에서 구현)
    ============================================================ */
-//@@HOME@@
+/* ============================================================
+   구독 자동 감지 (M4) — 순수 함수는 DETECT-START~END 사이 (단독 검증 가능)
+   ============================================================ */
+// ==DETECT-START==
+/* 가맹점명 정규화: 괄호 내용·공백·특수문자·숫자 꼬리 제거 */
+function normMerchant(s) {
+  return String(s || '').replace(/\([^)]*\)|\[[^\]]*\]|（[^）]*）/g, '').replace(/[\s_\-.*#]+/g, '').replace(/\d+$/, '').toLowerCase();
+}
+const dayNum = s => Math.round(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 86400000);
+const medianOf = a => { const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+/* 규칙: 월간 = 최근 6개월 안 3회 이상·간격 25~35일 / 연간 = 간격 355~375일 / 금액 편차 ±10% 이내.
+   기준일은 거래내역의 가장 최근 날짜. 거래가 끊긴(마지막 결제가 주기보다 한참 지난) 항목은 제외 */
+function detectSubs(txns, { dismissed = [], known = [] } = {}) {
+  const exp = txns.filter(t => t.type === 'expense'); if (!exp.length) return [];
+  const ref = dayNum(exp.reduce((a, t) => t.date > a ? t.date : a, ''));
+  const groups = new Map();
+  for (const t of exp) { const k = normMerchant(t.merchant); if (k.length < 2) continue; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); }
+  const out = [];
+  for (const [key, list] of groups) {
+    if (dismissed.includes(key) || known.includes(key)) continue;
+    const byDate = new Map(); list.forEach(t => { if (!byDate.has(t.date)) byDate.set(t.date, t); }); // 같은 날 중복 결제는 1회로
+    const seq = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    for (const [cycle, win, lo, hi, minN, stale] of [['monthly', 183, 25, 35, 3, 50], ['yearly', 1100, 355, 375, 2, 400]]) {
+      const inWin = seq.filter(t => ref - dayNum(t.date) <= win);
+      if (inWin.length < minN || ref - dayNum(inWin[inWin.length - 1].date) > stale) continue;
+      const run = [inWin[inWin.length - 1]]; // 마지막 결제부터 거슬러 올라가며 간격이 맞는 연속 구간
+      for (let i = inWin.length - 2; i >= 0; i--) { const g = dayNum(run[0].date) - dayNum(inWin[i].date); if (g < lo || g > hi) break; run.unshift(inWin[i]); }
+      if (run.length < minN) continue;
+      const med = medianOf(run.map(t => t.amount));
+      if (run.some(t => Math.abs(t.amount - med) > med * 0.1)) continue;
+      const last = run[run.length - 1], names = {}; run.forEach(t => { names[t.merchant] = (names[t.merchant] || 0) + 1; });
+      const sample = Object.keys(names).sort((a, b) => names[b] - names[a])[0];
+      const cats = run.map(t => t.category).filter(c => c && c !== '미분류');
+      out.push({ key, name: sample.replace(/\s+/g, ' ').trim(), sample, amount: Math.round(med), cycle, count: run.length, last: last.date, billingDay: cycle === 'yearly' ? last.date.slice(5) : +last.date.slice(8), category: cats[0] || '구독', method: last.method });
+      break;
+    }
+  }
+  return out.sort((a, b) => b.amount - a.amount);
+}
+// ==DETECT-END==
+
+function currentSuggestions() {
+  const known = S.subscriptions.flatMap(s => [normMerchant(s.name), normMerchant(s.matchKeyword)]).filter(Boolean);
+  return detectSubs(S.transactions, { dismissed: S.settings.dismissedSubs, known });
+}
+function suggestHtml() {
+  const list = currentSuggestions(); if (!list.length) return '';
+  return `<h2>구독으로 등록할까요?</h2>${list.map(x => `<div class="card" style="border-color:var(--accent)"><div class="head"><h3>${esc(x.name)}</h3><span class="num"><b>${won(x.amount)}원</b> <span class="sub">${CYCLE_LABEL[x.cycle]}</span></span></div>
+    <div class="sub">${x.count}회 연속 결제 · 마지막 ${esc(x.last)}${x.method ? ' · ' + esc(x.method) : ''}</div>
+    <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" data-act="sug-no" data-key="${esc(x.key)}">무시</button><button class="btn sm pri" data-act="sug-yes" data-key="${esc(x.key)}">등록</button></div></div>`).join('')}`;
+}
+actions['sug-no'] = el => { S.settings.dismissedSubs.push(el.dataset.key); save(); render(); };
+actions['sug-yes'] = el => {
+  const x = currentSuggestions().find(y => y.key === el.dataset.key); if (!x) return;
+  S.subscriptions.push({ id: uid(), name: x.name, amount: x.amount, cycle: x.cycle, billingDay: x.billingDay, category: x.category, method: x.method, startDate: todayStr(), active: true, memo: '거래내역에서 자동 감지', matchKeyword: x.sample });
+  save(); render(); toast('구독으로 등록했어요.');
+};
+
+/* ============================================================
+   홈 (M4)
+   ============================================================ */
+function categoryTotals(list) {
+  const m = {}; list.forEach(t => { if (isSpend(t)) { const c = isUnc(t) ? '미분류' : t.category; m[c] = (m[c] || 0) + t.amount; } });
+  return Object.entries(m).sort((a, b) => b[1] - a[1]);
+}
+function barsSvg(rows, total) {
+  if (!rows.length) return '';
+  const max = rows[0][1], H = 30, W = 320, lx = 84, bx = 92, bw = 130;
+  const body = rows.map(([c, v], i) => {
+    const y = i * H, w = Math.max(2, Math.round(bw * v / max));
+    return `<text x="0" y="${y + 19}">${esc(c.length > 6 ? c.slice(0, 6) + '…' : c)}</text><rect class="track" x="${bx}" y="${y + 8}" width="${bw}" height="12" rx="6"/><rect class="fill" x="${bx}" y="${y + 8}" width="${w}" height="12" rx="6"/><text class="v" x="${W}" y="${y + 19}" text-anchor="end">${won(v)}원 · ${Math.round(v / total * 100)}%</text>`;
+  }).join('');
+  return `<svg class="bars" viewBox="0 0 ${W} ${rows.length * H}" width="100%" role="img" aria-label="카테고리별 지출 상위 ${rows.length}개">${body}</svg>`;
+}
+function viewHome() {
+  const k = getMonth(), cur = txnsOf(k), prev = txnsOf(shiftKey(k, -1));
+  const sp = spendSum(cur), psp = spendSum(prev), inc = cur.reduce((a, t) => a + (t.type === 'income' ? t.amount : 0), 0);
+  const diff = sp - psp;
+  const cmp = !prev.length ? '<span class="sub">전월 데이터 없음</span>' : `<span style="color:var(${diff > 0 ? '--bad' : '--good'});font-weight:600">전월 대비 ${diff > 0 ? '▲' : diff < 0 ? '▼' : ''} ${won(Math.abs(diff))}원${psp ? ` (${diff >= 0 ? '+' : '−'}${Math.abs(Math.round(diff / psp * 100))}%)` : ''}</span> <span class="sub">전월 전체 ${won(psp)}원</span>`;
+  const cats = categoryTotals(cur), top = cats.slice(0, 5);
+  const upc = subsSorted().filter(x => x.s.active).slice(0, 3);
+  const unc = unclassifiedCount();
+  if (!S.transactions.length && !S.subscriptions.length) return `<div class="card"><h3>시작하기</h3><div class="sub" style="margin-top:6px">① 설정 → 엑셀 올리기에서 뱅크샐러드 엑셀을 올리면 가계부가 채워져요.<br>② 구독 탭에서 정기 결제를 등록하세요.<br>③ 계산기 탭에서 대출·적금을 계산해 보세요.</div><button class="btn pri block" data-act="go" data-tab="settings">설정으로 가기</button></div>`;
+  return `<div class="mbar"><button class="btn sm" data-act="month" data-d="-1" aria-label="이전 달">◀</button><b>${esc(keyLabel(k))}</b><button class="btn sm" data-act="month" data-d="1" aria-label="다음 달">▶</button></div>
+    <div class="card"><div class="sub">지출 합계</div><div class="big">${won(sp)}원</div><div style="margin-top:2px">${cmp}</div>${inc ? `<div class="sub" style="margin-top:4px">수입 ${won(inc)}원</div>` : ''}</div>
+    ${unc ? `<div class="card hl"><div class="head"><span><span class="badge warn">미분류 ${unc}건</span> 분류가 필요한 거래가 있어요</span><button class="btn sm" data-act="unc-go">정리하기</button></div></div>` : ''}
+    <h2>카테고리 상위 ${top.length || 5}개</h2><div class="card">${top.length ? barsSvg(top, sp) : '<div class="empty" style="padding:12px">이 달 지출 내역이 없어요.</div>'}</div>
+    <h2>다가오는 구독 결제</h2>${upc.length ? upc.map(({ s, next }) => `<div class="card${(startOfDay(next) - startOfDay(new Date())) / 86400000 <= 7 ? ' hl' : ''}"><div class="head"><h3>${esc(s.name)}</h3><b class="num">${won(s.amount)}원</b></div><div class="sub">${fmtDate(next)} · <b>${dday(next)}</b></div></div>`).join('') : '<div class="card"><div class="sub">등록된 구독이 없어요.</div></div>'}
+    ${currentSuggestions().length ? `<button class="btn block" data-act="go" data-tab="subs">구독 등록 제안 ${currentSuggestions().length}건 보기</button>` : ''}`;
+}
+actions['unc-go'] = () => {
+  const latest = S.transactions.filter(isUnc).reduce((a, t) => t.date > a ? t.date : a, '');
+  ui.month = periodKey(latest); ui.fUnc = true; ui.q = ''; ui.fType = ''; ui.fCat = ''; ui.fMethod = ''; goTab('ledger');
+};
+
+/* ---------- 샘플 데이터 생성기 (설정 화면 숨김 버튼) — 전부 가짜 데이터, 메모에 [샘플] 표시 ---------- */
+const SAMPLE_MEMO = '[샘플]';
+function makeSample() {
+  let seed = 20260101; const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const now = startOfDay(new Date()), out = [];
+  const fixed = [['넷플릭스', '구독', '영상', 17000, 5, '신한카드'], ['유튜브프리미엄', '구독', '영상', 14900, 12, '신한카드'], ['KT 통신요금', '주거/통신', '통신비', 55000, 20, '국민카드'], ['필라테스 월회비', '의료/건강', '운동', 120000, 1, '국민카드']];
+  const shops = [['김밥천국', '식비', '점심', 6000, 9000], ['스타벅스', '카페/간식', '커피', 4500, 7000], ['GS25', '식비', '편의점', 2000, 9000], ['쿠팡', '쇼핑', '온라인쇼핑', 12000, 70000], ['카카오택시', '교통', '택시', 6000, 18000], ['배달의민족', '식비', '배달', 14000, 26000], ['올리브영', '쇼핑', '뷰티', 9000, 40000], ['CGV', '문화/여가', '영화', 14000, 28000]];
+  for (let mo = 0; mo <= 3; mo++) {
+    const y = new Date(now.getFullYear(), now.getMonth() - mo, 1), ym = [y.getFullYear(), y.getMonth()];
+    const at = d => new Date(ym[0], ym[1], Math.min(d, daysIn(ym[0], ym[1])));
+    const push = (d, type, cat, sub, merchant, amount, method) => { const dt = at(d); if (dt <= now) out.push({ date: fmtDate(dt), time: `${pad(8 + Math.floor(rand() * 12))}:${pad(Math.floor(rand() * 60))}`, type, amount, category: cat, subcategory: sub, merchant, method, memo: SAMPLE_MEMO, source: 'manual' }); };
+    fixed.forEach(f => push(f[4], 'expense', f[1], f[2], f[0], f[3], f[5]));
+    push(25, 'income', '급여', '월급', '(주)샘플회사 급여', 3200000, '국민은행');
+    push(26, 'transfer', '이체', '계좌이체', '본인 적금', 500000, '국민은행');
+    for (let i = 0; i < 24; i++) { const s = shops[Math.floor(rand() * shops.length)]; push(1 + Math.floor(rand() * 28), 'expense', i % 7 === 0 ? '' : s[1], i % 7 === 0 ? '' : s[2], s[0] + (i % 3 ? '' : ' 역삼점'), Math.round((s[3] + rand() * (s[4] - s[3])) / 100) * 100, rand() < 0.7 ? '신한카드' : '국민카드'); }
+  }
+  const cnt = new Map();
+  return out.map(t => { const key = txnKey(t), n = (cnt.get(key) || 0) + 1; cnt.set(key, n); t.id = fnv(n > 1 ? key + '#' + n : key); return t; });
+}
+function setSample() {
+  return `<div class="card"><h3>개발자용 · 샘플 데이터</h3><div class="sub">테스트용 가짜 거래를 넣거나 지웁니다. 실제 데이터에는 영향이 없어요.</div>
+    <div class="row" style="margin-top:8px"><button class="btn" data-act="sample-add">샘플 3개월 넣기</button><button class="btn" data-act="sample-del">샘플만 지우기</button></div></div>`;
+}
+actions['sample-add'] = () => {
+  const have = new Set(S.transactions.map(t => t.id)), add = makeSample().filter(t => !have.has(t.id));
+  S.transactions.push(...add); ui.month = curKey(); save(); render(); toast(`샘플 ${add.length}건을 넣었어요.`);
+};
+actions['sample-del'] = () => { const n = S.transactions.length; S.transactions = S.transactions.filter(t => t.memo !== SAMPLE_MEMO); save(); render(); toast(`샘플 ${n - S.transactions.length}건을 지웠어요.`); };
 /* ============================================================
    가계부 (M3) — 엑셀 파싱 순수 함수는 PARSE-START~END 사이 (화면과 무관, 단독 검증 가능)
    ============================================================ */
@@ -865,7 +987,7 @@ function viewSettings() {
       <button class="btn bad block" data-act="wipe">전체 삭제</button></div>
     ${setLog()}
     <div class="disc" id="ver" data-act="secret">저장 위치: 이 브라우저(localStorage) · 거래 ${S.transactions.length}건 · 구독 ${S.subscriptions.length}개</div>
-    <!--@@SET_SAMPLE@@-->`;
+    ${ui.showSample ? setSample() : ''}`;
 }
 async function wipeAll() {
   if (!await ask('전체 삭제', '거래, 구독, 규칙, 설정이 모두 삭제됩니다.<br>먼저 백업을 내려받으셨나요?', '계속', true)) return;
@@ -960,7 +1082,6 @@ document.addEventListener('submit', e => {
   if (!r.keyword || !r.category) return;
   S.rules.push(r); save(); render(); toast('규칙을 추가했어요. 기존 거래에는 아래 버튼으로 적용하세요.');
 });
-//@@EXTRA@@
 render();
 </script>
 </body>

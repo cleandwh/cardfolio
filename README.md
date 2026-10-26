@@ -11,3 +11,5 @@
 2. 1~2분 후 위 주소 새로고침
 
 수정 대상은 `<script>` 안의 `CATS`(가맹점 사전) · `CARDS`(카드 규칙) · `EVENTS`(이벤트) 세 배열. 나머지 코드는 건드리지 않음.
+
+재무 대시보드: https://cleandwh.github.io/cardfolio/finance/
