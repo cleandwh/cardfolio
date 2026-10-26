@@ -311,6 +311,152 @@ function eventRow(e) {
     <div class="r"><span class="badge ${e.direction === 'received' ? 'good' : ''}">${e.direction === 'received' ? '받음' : '보냄'}</span><br><b>${won(e.amount)}원</b></div></div>`;
 }
 
+/* ---------- 구매 물품 ---------- */
+const ITEM_CATS = ['가전', '디지털', '가구', '생활', '의류', '식품', '건강', '기타'];
+// 영수증 사진: 긴 변 1280px JPEG로 줄여 data URL로 보관 (원본은 저장하지 않음)
+async function shrinkPhoto(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) {
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+  }
+  const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, k = Math.min(1, 1280 / Math.max(w, h));
+  const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+  if (bmp.close) bmp.close();
+  return cv.toDataURL('image/jpeg', 0.8);
+}
+function warrantyBadge(i) {
+  if (!i.warrantyEnd) return '';
+  const d = dayDiff(todayStr(), i.warrantyEnd);
+  if (d < 0) return '<span class="badge">보증 종료</span>';
+  if (d <= 30) return `<span class="badge warn">보증 ${d === 0 ? '오늘 만료' : 'D-' + d}</span>`;
+  return `<span class="sub">보증 ~${esc(i.warrantyEnd)}</span>`;
+}
+REG.item = {
+  label: '물품', store: 'items', fab: '물품 추가',
+  summary() {
+    const years = [...new Set(D.items.map(i => yearOf(i.date)).filter(Boolean))].sort().reverse();
+    const y = ui.itYear && years.includes(ui.itYear) ? ui.itYear : '';
+    const list = D.items.filter(i => !y || yearOf(i.date) === y).sort((a, b) => b.date.localeCompare(a.date));
+    const sp = C.itemSpend(list), max = sp.byCategory[0] ? sp.byCategory[0].total || 1 : 1;
+    let html = years.length ? `<div class="seg"><button data-act="it-year" data-y=""${y ? '' : ' class="on"'}>전체</button>${years.map(v => `<button data-act="it-year" data-y="${v}"${v === y ? ' class="on"' : ''}>${v}년</button>`).join('')}</div>` : '';
+    if (!list.length) return html + '<div class="empty">구매 물품 기록이 없어요.<br>오른쪽 아래 + 버튼으로 추가하세요.</div>';
+    html += `<div class="card"><div class="kv"><span>${y ? y + '년 ' : ''}지출 합계</span><b>${won(sp.total)}원 <span class="sub">(${sp.count}건)</span></b></div>
+      ${sp.byCategory.map(c => `<div style="margin-top:8px"><div class="kv" style="border:0;padding:0"><span class="sub">${esc(c.category)} · ${c.count}건</span><span class="sub num">${won(c.total)}원</span></div><div class="bar"><i style="width:${Math.max(2, Math.round(c.total / max * 100))}%"></i></div></div>`).join('')}</div>`;
+    return html + '<div class="card" style="padding:4px 16px">' + list.map(i => `<div class="li" data-act="edit" data-t="item" data-id="${esc(i.id)}"><div class="l"><b>${esc(i.name)}${i.photo ? ' 📷' : ''}</b>
+      <span class="sub">${esc(i.date)}${i.store ? ' · ' + esc(i.store) : ''}${i.cardName ? ' · ' + esc(i.cardName) : ''}</span></div><div class="r"><b>${won(i.price)}원</b><br>${warrantyBadge(i)}</div></div>`).join('') + '</div>';
+  },
+  form(i) {
+    const x = i || { name: '', date: todayStr(), price: '', category: '', store: '', cardId: '', cardName: '', warrantyEnd: '', asContact: '', photo: '', memo: '' };
+    const cards = [...D.cards].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    const orphan = x.cardName && !cards.some(c => c.id === x.cardId);
+    const cats = [...new Set([...ITEM_CATS, ...D.items.map(t => t.category).filter(Boolean)])];
+    return `<h3>${i ? '물품 수정' : '물품 추가'}</h3>
+      <label class="f">품명<input name="name" value="${esc(x.name)}" required autocomplete="off"></label>
+      <div class="grid2"><label class="f">구매일<input type="date" name="date" value="${esc(x.date)}" required></label>
+      <label class="f">가격 (원)<input name="price" inputmode="numeric" value="${esc(x.price)}" autocomplete="off"></label></div>
+      <div class="grid2"><label class="f">카테고리<input name="category" list="icats" value="${esc(x.category)}" autocomplete="off"></label>
+      <label class="f">구매처<input name="store" value="${esc(x.store)}" autocomplete="off"></label></div>
+      <datalist id="icats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      <label class="f">결제카드<select name="cardId"><option value="">(선택 안 함)</option>${cards.map(c => `<option value="${esc(c.id)}"${c.id === x.cardId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}${orphan ? `<option value="__keep" selected>${esc(x.cardName)} (삭제된 카드)</option>` : ''}</select></label>
+      <div class="grid2"><label class="f">보증 만료일<input type="date" name="warrantyEnd" value="${esc(x.warrantyEnd)}"></label>
+      <label class="f">A/S 연락처<input name="asContact" value="${esc(x.asContact)}" autocomplete="off"></label></div>
+      <label class="f">영수증 사진<input type="file" id="f-photo" accept="image/*"></label>
+      <div id="photo-box">${x.photo ? `<img class="thumb" src="${x.photo}" alt="영수증">` : ''}</div>
+      <button type="button" class="btn sm" id="photo-rm" style="margin-top:6px"${x.photo ? '' : ' hidden'}>사진 지우기</button>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  wire(root, old) {
+    const f = $('#f', root); f._photo = old ? old.photo : '';
+    const box = $('#photo-box', root), rm = $('#photo-rm', root);
+    $('#f-photo', root).addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try { f._photo = await shrinkPhoto(file); box.innerHTML = `<img class="thumb" src="${f._photo}" alt="영수증">`; rm.hidden = false; }
+      catch (err) { toast('사진을 읽지 못했어요.'); }
+    });
+    rm.addEventListener('click', () => { f._photo = ''; box.innerHTML = ''; $('#f-photo', root).value = ''; rm.hidden = true; });
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.name.trim()) return '품명을 입력해 주세요.';
+    if (!v.date) return '구매일을 입력해 주세요.';
+    const price = v.price.trim() === '' ? 0 : num(v.price);
+    if (price < 0) return '가격은 0 이상이어야 해요.';
+    const card = D.cards.find(c => c.id === v.cardId);
+    const keep = v.cardId === '__keep' && old;
+    return { id: old ? old.id : uid(), name: v.name.trim(), date: v.date, price, category: v.category.trim(), store: v.store.trim(),
+      cardId: card ? card.id : keep ? old.cardId : '', cardName: card ? card.name : keep ? old.cardName : '',
+      warrantyEnd: v.warrantyEnd || '', asContact: v.asContact.trim(), photo: f._photo || '', memo: v.memo.trim() };
+  },
+  del: i => `${esc(i.name)} 물품을 삭제할까요?`
+};
+
+/* ---------- 카드 ---------- */
+REG.card = {
+  label: '카드', store: 'cards', fab: '카드 추가',
+  summary() {
+    if (!D.cards.length) return '<div class="empty">등록된 카드가 없어요.<br>+ 버튼으로 추가하거나, 설정에서 재무 대시보드 백업을 가져오세요.</div>';
+    const list = [...D.cards].sort((a, b) => (a.renewMonth || 13) - (b.renewMonth || 13) || a.name.localeCompare(b.name, 'ko'));
+    const total = D.cards.reduce((s, c) => s + num(c.fee), 0), soon = new Set(C.alerts(D, todayStr()).filter(a => a.kind === 'card').map(a => a.id));
+    return `<div class="card"><div class="kv"><span>카드 ${D.cards.length}장 · 연회비 합계(연)</span><b>${won(total)}원</b></div></div>
+      <div class="card" style="padding:4px 16px">${list.map(c => `<div class="li" data-act="edit" data-t="card" data-id="${esc(c.id)}"><div class="l"><b>${esc(c.name)}</b>
+      <span class="sub">${c.renewMonth ? '갱신 ' + c.renewMonth + '월' : '갱신월 미입력'}${c.memo ? ' · ' + esc(c.memo.split('\n')[0]) : ''}</span></div>
+      <div class="r"><b>${c.fee ? won(c.fee) + '원' : '연회비 없음'}</b>${soon.has(c.id) ? '<br><span class="badge warn">갱신 임박</span>' : ''}</div></div>`).join('')}</div>`;
+  },
+  form(c) {
+    const x = c || { name: '', fee: '', renewMonth: '', memo: '' };
+    return `<h3>${c ? '카드 수정' : '카드 추가'}</h3>
+      <label class="f">카드명<input name="name" value="${esc(x.name)}" required autocomplete="off"></label>
+      <div class="grid2"><label class="f">연회비 (원)<input name="fee" inputmode="numeric" value="${esc(x.fee)}" autocomplete="off"></label>
+      <label class="f">갱신월<select name="renewMonth"><option value="">(모름)</option>${Array.from({ length: 12 }, (_, k) => `<option value="${k + 1}"${+x.renewMonth === k + 1 ? ' selected' : ''}>${k + 1}월</option>`).join('')}</select></label></div>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.name.trim()) return '카드명을 입력해 주세요.';
+    const fee = v.fee.trim() === '' ? 0 : num(v.fee);
+    if (fee < 0) return '연회비는 0 이상이어야 해요.';
+    return { id: old ? old.id : uid(), name: v.name.trim(), fee, renewMonth: v.renewMonth ? +v.renewMonth : '', memo: v.memo.trim() };
+  },
+  del: c => `${esc(c.name)} 카드를 삭제할까요?<br>이 카드로 결제한 물품 기록에는 카드 이름이 그대로 남아요.`
+};
+
+/* ---------- 메모·생각 ---------- */
+const parseTags = s => [...new Set(String(s || '').split(/[\s,]+/).map(t => t.replace(/^#+/, '').trim()).filter(Boolean))];
+REG.memo = {
+  label: '메모', store: 'memos', fab: '메모 추가',
+  summary() {
+    const tagCount = {}; D.memos.forEach(m => (m.tags || []).forEach(t => tagCount[t] = (tagCount[t] || 0) + 1));
+    const tags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a] || a.localeCompare(b, 'ko'));
+    const tag = tags.includes(ui.memoTag) ? ui.memoTag : '';
+    const list = D.memos.filter(m => !tag || (m.tags || []).includes(tag)).sort((a, b) => b.date.localeCompare(a.date));
+    let html = tags.length ? `<div class="seg"><button data-act="memo-tag" data-tag=""${tag ? '' : ' class="on"'}>전체</button>${tags.map(t => `<button data-act="memo-tag" data-tag="${esc(t)}"${t === tag ? ' class="on"' : ''}>#${esc(t)} ${tagCount[t]}</button>`).join('')}</div>` : '';
+    if (!list.length) return html + '<div class="empty">메모가 없어요.<br>오른쪽 아래 + 버튼으로 추가하세요.</div>';
+    return html + list.map(m => memoCard(m)).join('');
+  },
+  form(m, preset = {}) {
+    const x = m || Object.assign({ date: todayStr(), title: '', body: '', tags: [], personId: '' }, preset);
+    return `<h3>${m ? '메모 수정' : '메모 추가'}</h3>
+      <label class="f">날짜<input type="date" name="date" value="${esc(x.date)}" required></label>
+      <label class="f">제목<input name="title" value="${esc(x.title)}" autocomplete="off"></label>
+      <label class="f">내용<textarea name="body">${esc(x.body)}</textarea></label>
+      <label class="f">태그 (띄어쓰기로 구분, 예: 아이디어 여행)<input name="tags" value="${esc((x.tags || []).map(t => '#' + t).join(' '))}" autocomplete="off"></label>
+      <label class="f">관련 사람 (선택)<select name="personId"><option value="">(없음)</option>${peopleSorted().map(p => `<option value="${esc(p.id)}"${p.id === x.personId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`;
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.title.trim() && !v.body.trim()) return '제목이나 내용을 입력해 주세요.';
+    return { id: old ? old.id : uid(), date: v.date || todayStr(), title: v.title.trim(), body: v.body.trim(), tags: parseTags(v.tags), personId: v.personId || '' };
+  },
+  del: m => `"${esc(m.title || m.body.slice(0, 20))}" 메모를 삭제할까요?`
+};
+function memoCard(m) {
+  return `<div class="card tap" data-act="edit" data-t="memo" data-id="${esc(m.id)}"><div class="head"><h3>${esc(m.title || m.body.split('\n')[0].slice(0, 30) || '(제목 없음)')}</h3><span class="sub">${esc(m.date)}</span></div>
+    ${m.title && m.body ? `<div class="sub" style="margin-top:4px;white-space:pre-wrap">${esc(m.body.length > 120 ? m.body.slice(0, 120) + '…' : m.body)}</div>` : ''}
+    <div class="tags">${m.personId ? `<span class="badge good">${esc(personName(m.personId))}</span>` : ''}${(m.tags || []).map(t => `<span class="badge">#${esc(t)}</span>`).join('')}</div></div>`;
+}
+
 /* ---------- 사람 ---------- */
 REG.person = {
   label: '사람', store: 'people', fab: '사람 추가',
@@ -336,14 +482,15 @@ REG.person = {
 /* ============================================================
    화면 상태 · 탭
    ============================================================ */
-const ui = { tab: 'home', seg: 'event', evYear: '' };
+const ui = { tab: 'home', seg: 'event', evYear: '', itYear: '', memoTag: '', sq: '', sTypes: [], sFrom: '', sTo: '' };
 const ICON = {
   home: '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
   list: '<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
   people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18.5 14.5c2 .8 3 2.6 3 5.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
 };
-const TABS = [['home', '홈', 'home'], ['records', '기록', 'list'], ['people', '사람', 'people'], ['settings', '설정', 'gear']];
+const TABS = [['home', '홈', 'home'], ['records', '기록', 'list'], ['people', '사람', 'people'], ['search', '검색', 'search'], ['settings', '설정', 'gear']];
 
 const getAlerts = () => C.alerts(D, todayStr());
 function backupDue() {
@@ -357,19 +504,21 @@ function backupDue() {
 /* ---------- 홈 ---------- */
 function viewHome() {
   const al = getAlerts(), today = todayStr();
-  const ev = al.filter(a => a.kind === 'event'), bd = al.filter(a => a.kind === 'birthday');
+  const ev = al.filter(a => a.kind === 'event'), bd = al.filter(a => a.kind === 'birthday'), wr = al.filter(a => a.kind === 'warranty'), cd = al.filter(a => a.kind === 'card');
   let html = '';
-  html += `<div class="row" style="margin-top:4px"><button class="btn pri" data-act="add" data-t="event">+ 경조사</button></div>`;
+  html += `<div class="row" style="margin-top:4px"><button class="btn pri" data-act="go-add" data-t="event">+ 경조사</button><button class="btn pri" data-act="go-add" data-t="item">+ 물품</button><button class="btn pri" data-act="go-add" data-t="memo">+ 메모</button></div>`;
+  if (wr.length) html += `<h2>보증 만료 임박</h2>` + wr.map(a => `<div class="card tap hl" data-act="edit" data-t="item" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${a.days === 0 ? '오늘 만료' : 'D-' + a.days}</span></div><div class="sub">보증 만료 ${esc(a.date)}${a.sub ? ' · A/S ' + esc(a.sub) : ''}</div></div>`).join('');
+  if (cd.length) html += `<h2>연회비 갱신</h2>` + cd.map(a => `<div class="card tap hl" data-act="edit" data-t="card" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${a.monthsAhead === 0 ? '이번 달' : '다음 달'}</span></div><div class="sub">${a.month}월 갱신${a.fee ? ' · 연회비 ' + won(a.fee) + '원' : ''}</div></div>`).join('');
   if (ev.length) html += `<h2>다가오는 경조사</h2>` + ev.map(a => `<div class="card tap hl" data-act="edit" data-t="event" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${ddayText(a.days)}</span></div><div class="sub">${esc(a.date)} · ${a.direction === 'received' ? '받음' : '보냄'} ${won(a.amount)}원</div></div>`).join('');
   if (bd.length) html += `<h2>다가오는 생일</h2>` + bd.map(a => `<div class="card tap" data-act="person" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge">${ddayText(a.days)}</span></div><div class="sub">${esc(a.date.slice(5))}</div></div>`).join('');
   const recent = [...D.events].sort((a, b) => b.date.localeCompare(a.date)).filter(e => e.date <= today).slice(0, 5);
   if (recent.length) html += `<h2>최근 경조사</h2><div class="card" style="padding:4px 16px">${recent.map(eventRow).join('')}</div>`;
-  if (!D.events.length && !D.people.length) html += `<div class="card" style="margin-top:14px"><h3>시작하기</h3><div class="sub" style="margin-top:6px">① 위의 <b>+ 경조사</b>로 주고받은 경조사를 기록하세요. 사람은 그때 같이 추가돼요.<br>② <b>사람</b> 탭에서 사람별 주고받은 합계를 볼 수 있어요.<br>③ 가끔 <b>설정</b>에서 백업 파일을 내려받아 보관하세요.</div></div>`;
+  if (!STORES.some(k => D[k].length)) html += `<div class="card" style="margin-top:14px"><h3>시작하기</h3><div class="sub" style="margin-top:6px">① 위의 버튼으로 경조사·구매 물품·메모를 기록하세요. 사람은 경조사 입력 때 같이 추가돼요.<br>② <b>사람</b> 탭에서 사람별 주고받은 합계를, <b>검색</b> 탭에서 모든 기록을 한 번에 찾을 수 있어요.<br>③ 보증 만료·연회비 갱신이 가까워지면 이 화면에 알려드려요.<br>④ 가끔 <b>설정</b>에서 백업 파일을 내려받아 보관하세요.</div></div>`;
   return html;
 }
 
 /* ---------- 기록 ---------- */
-const SEGS = ['event'];
+const SEGS = ['event', 'item', 'card', 'memo'];
 function viewRecords() {
   const R = REG[ui.seg];
   const seg = SEGS.length > 1 ? `<div class="seg">${SEGS.map(k => `<button data-act="seg" data-k="${k}"${k === ui.seg ? ' class="on"' : ''}>${REG[k].label}</button>`).join('')}</div>` : '';
@@ -397,7 +546,30 @@ function personSheet(id) {
     <div class="kv"><span>차액</span><b>${balanceText(t.balance)}</b></div></div>
     <h2 style="margin-top:16px">경조사 기록</h2>
     ${evs.length ? `<div class="card" style="padding:4px 16px">${evs.map(eventRow).join('')}</div>` : '<div class="sub">기록이 없어요.</div>'}
+    ${D.memos.some(m => m.personId === id) ? `<h2>관련 메모</h2>${D.memos.filter(m => m.personId === id).sort((a, b) => b.date.localeCompare(a.date)).map(memoCard).join('')}` : ''}
     <div class="row" style="margin-top:14px"><button class="btn pri" data-act="add" data-t="event" data-person="${esc(id)}">+ 경조사</button><button class="btn" data-act="edit" data-t="person" data-id="${esc(id)}">수정</button><button class="btn" data-act="close">닫기</button></div>`);
+}
+
+/* ---------- 검색 ---------- */
+const STYPE = [['event', '경조사'], ['item', '물품'], ['card', '카드'], ['memo', '메모'], ['person', '사람']];
+const TYPE_LABEL = Object.fromEntries(STYPE);
+function viewSearch() {
+  const per = !ui.sFrom && !ui.sTo ? 'all' : ui.sFrom && ui.sFrom.endsWith('-01-01') && ui.sFrom.slice(0, 4) === ui.sTo.slice(0, 4) && ui.sTo.endsWith('-12-31') ? (+ui.sFrom.slice(0, 4) === new Date().getFullYear() ? 'this' : +ui.sFrom.slice(0, 4) === new Date().getFullYear() - 1 ? 'last' : '') : '';
+  return `<input id="sq" type="search" placeholder="이름, 품명, 메모 내용 등 무엇이든" value="${esc(ui.sq)}" autocomplete="off" enterkeyhint="search">
+    <div class="seg" style="margin-top:8px"><button data-act="s-type" data-k=""${ui.sTypes.length ? '' : ' class="on"'}>전체</button>${STYPE.map(([k, l]) => `<button data-act="s-type" data-k="${k}"${ui.sTypes.includes(k) ? ' class="on"' : ''}>${l}</button>`).join('')}</div>
+    <div class="seg"><button data-act="s-per" data-p="all"${per === 'all' ? ' class="on"' : ''}>전체 기간</button><button data-act="s-per" data-p="this"${per === 'this' ? ' class="on"' : ''}>올해</button><button data-act="s-per" data-p="last"${per === 'last' ? ' class="on"' : ''}>작년</button></div>
+    <div class="grid2"><label class="f" style="margin-top:0">시작일<input type="date" id="sfrom" value="${esc(ui.sFrom)}"></label><label class="f" style="margin-top:0">종료일<input type="date" id="sto" value="${esc(ui.sTo)}"></label></div>
+    <div id="sres"></div>`;
+}
+function renderSearchResults() {
+  const box = $('#sres'); if (!box) return;
+  const hasFilter = ui.sq.trim() || ui.sTypes.length || ui.sFrom || ui.sTo;
+  if (!hasFilter) { box.innerHTML = '<div class="empty">검색어를 입력하거나 종류·기간을 골라 보세요.</div>'; return; }
+  const res = C.searchRecords(D, { q: ui.sq, types: ui.sTypes, from: ui.sFrom, to: ui.sTo });
+  if (!res.length) { box.innerHTML = '<div class="empty">찾는 기록이 없어요.</div>'; return; }
+  const ev = res.filter(r => r.type === 'event' && r.date <= todayStr());
+  const sum = ui.sq.trim() || ui.sFrom || ui.sTo ? (() => { const t = C.sumEvents(D.events.filter(e => ev.some(r => r.id === e.id))); return t.count ? `<div class="card"><div class="sub">검색된 경조사 ${t.count}건 합계</div><div class="kv"><span>보낸</span><b>${won(t.sent)}원</b></div><div class="kv"><span>받은</span><b>${won(t.received)}원</b></div></div>` : ''; })() : '';
+  box.innerHTML = `<div class="sub" style="margin:10px 0 0">${res.length}건${res.length > 100 ? ' (상위 100건 표시)' : ''}</div>${sum}<div class="card" style="padding:4px 16px">${res.slice(0, 100).map(r => `<div class="li" data-act="hit" data-t="${r.type}" data-id="${esc(r.id)}"><div class="l"><b>${esc(r.title)}</b><span class="sub">${esc(r.sub)}</span></div><div class="r"><span class="badge">${TYPE_LABEL[r.type]}</span>${r.date ? `<br><span class="sub">${esc(r.date)}</span>` : ''}</div></div>`).join('')}</div>`;
 }
 
 /* ---------- 설정 ---------- */
@@ -412,7 +584,7 @@ function viewSettings() {
       <div class="row" style="margin-top:10px"><button class="btn pri" data-act="backup-out">백업 내보내기</button><button class="btn" data-act="backup-in">백업 가져오기</button></div>
       <input type="file" id="backup-file" accept=".json,application/json" hidden></div>
     <h2>데이터 현황</h2>
-    <div class="card"><div class="kv"><span>경조사</span><b>${D.events.length}건</b></div><div class="kv"><span>사람</span><b>${D.people.length}명</b></div></div>
+    <div class="card">${STORES.map(k => `<div class="kv"><span>${REG_LABEL[k]}</span><b>${D[k].length}${k === 'people' ? '명' : '건'}</b></div>`).join('')}</div>
     <h2>전체 삭제</h2>
     <div class="card"><div class="sub">이 브라우저에 저장된 모든 기록을 지웁니다. 되돌릴 수 없어요.</div><button class="btn bad block" data-act="wipe">전체 삭제</button></div>
     <div class="disc">저장 위치: 이 폰의 브라우저(IndexedDB). 서버로 전송되는 데이터는 없습니다.</div>`;
@@ -448,15 +620,16 @@ function render() {
   const al = getAlerts();
   const n = al.length + (backupDue() ? 1 : 0);
   $('#tabs').innerHTML = TABS.map(([k, label, ic]) => `<button data-act="tab" data-k="${k}"${k === ui.tab ? ' class="on"' : ''} aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[ic]}</svg>${label}${k === 'home' && n ? `<span class="dot">${n}</span>` : ''}</button>`).join('');
-  const titles = { home: '라이프 기록', records: '기록', people: '사람', settings: '설정' };
+  const titles = { home: '라이프 기록', records: '기록', people: '사람', search: '검색', settings: '설정' };
   $('#title').textContent = titles[ui.tab];
   const due = backupDue();
   $('#banner').innerHTML = (storageProblem ? `<div class="banner bad">${esc(storageProblem)}</div>` : '') + (saveFailed ? '<div class="banner bad">마지막 저장에 실패했어요. 설정에서 백업을 내려받아 두세요.</div>' : '')
     + (due ? `<div class="banner">${due.never ? '아직 백업한 적이 없어요.' : `마지막 백업이 ${due.days}일 전이에요.`} 한 달에 한 번은 백업해 두세요.<div class="row"><button class="btn sm pri" data-act="backup-out">지금 백업</button><button class="btn sm" data-act="snooze">일주일 뒤에 알림</button></div></div>` : '');
-  const v = { home: viewHome, records: viewRecords, people: viewPeople, settings: viewSettings }[ui.tab];
+  const v = { home: viewHome, records: viewRecords, people: viewPeople, search: viewSearch, settings: viewSettings }[ui.tab];
   $('#view').innerHTML = v();
   const fab = $('#fab');
   fab.hidden = !(ui.tab === 'records' || ui.tab === 'people');
+  if (ui.tab === 'search') renderSearchResults();
 }
 
 function openForm(type, id, preset) {
@@ -465,7 +638,7 @@ function openForm(type, id, preset) {
   const root = openSheet(`<form id="f" novalidate>${R.form(old, preset)}
     <div class="row" style="margin-top:16px"><button class="btn pri" type="submit">저장</button><button class="btn" type="button" data-act="close">취소</button>${old ? '<button class="btn bad" type="button" data-act="del-rec" style="margin-left:auto">삭제</button>' : ''}</div></form>`);
   const f = $('#f', root);
-  if (R.wire) R.wire(root);
+  if (R.wire) R.wire(root, old);
   f.addEventListener('submit', async e => {
     e.preventDefault();
     const rec = await R.collect(f, old);
@@ -485,6 +658,12 @@ Object.assign(actions, {
   seg: el => { ui.seg = el.dataset.k; render(); },
   'ev-year': el => { ui.evYear = el.dataset.y; render(); },
   fab: () => { if (ui.tab === 'people') openForm('person'); else openForm(ui.seg); },
+  'it-year': el => { ui.itYear = el.dataset.y; render(); },
+  'memo-tag': el => { ui.memoTag = el.dataset.tag; render(); },
+  's-type': el => { const t = el.dataset.k, a = ui.sTypes; if (!t) ui.sTypes = []; else ui.sTypes = a.includes(t) ? a.filter(x => x !== t) : [...a, t]; render(); },
+  's-per': el => { const y = new Date().getFullYear(), p = el.dataset.p; ui.sFrom = p === 'this' ? y + '-01-01' : p === 'last' ? (y - 1) + '-01-01' : ''; ui.sTo = p === 'this' ? y + '-12-31' : p === 'last' ? (y - 1) + '-12-31' : ''; render(); },
+  hit: el => { const t = el.dataset.t; if (t === 'person') personSheet(el.dataset.id); else openForm(t, el.dataset.id); },
+  'go-add': el => { ui.tab = 'records'; ui.seg = el.dataset.t; render(); openForm(el.dataset.t); },
   add: el => openForm(el.dataset.t, null, el.dataset.person ? { personId: el.dataset.person } : undefined),
   edit: el => openForm(el.dataset.t, el.dataset.id),
   person: el => personSheet(el.dataset.id),
@@ -493,7 +672,7 @@ Object.assign(actions, {
   'backup-in': () => $('#backup-file').click(),
   snooze: () => { const d = new Date(Date.now() + 7 * 86400000); setMeta('snoozeUntil', fmtDate(d)); render(); toast('일주일 뒤에 다시 알려드릴게요.'); },
   wipe: async () => {
-    if (!await ask('전체 삭제', '경조사, 사람 등 모든 기록이 삭제됩니다.<br>먼저 백업을 내려받으셨나요?', '계속', true, '삭제')) return;
+    if (!await ask('전체 삭제', '경조사, 사람 등 경조사·물품·카드·메모 등 모든 기록이 삭제됩니다.<br>먼저 백업을 내려받으셨나요?', '계속', true, '삭제')) return;
     await replaceAll({}); await setMeta('lastBackup', ''); render(); toast('모두 삭제했어요.');
   }
 });
@@ -501,8 +680,10 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (el && actions[el.dataset.act]) actions[el.dataset.act](el, e);
 });
+document.addEventListener('input', e => { if (e.target.id === 'sq') { ui.sq = e.target.value; renderSearchResults(); } });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.id === 'sfrom' || t.id === 'sto') { ui[t.id === 'sfrom' ? 'sFrom' : 'sTo'] = t.value; render(); }
   if (t.id === 'backup-file' && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
 });
 

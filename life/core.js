@@ -168,7 +168,7 @@
     return null;
   }
   const PERIOD_RE = /(\d{4}\s*년(\s*\d{1,2}\s*월)?|재작년|작년|지난해|전년|올해|금년|올\s*한해|이번\s*달|이달|지난\s*달|저번\s*달)/g;
-  const STOP = new Set(['얼마', '얼마나', '했어', '했지', '했나', '줬어', '줬지', '준', '받았어', '받았지', '보냈어', '보냈지', '언제', '뭐', '무엇', '어디', '알려줘', '알려', '있어', '있지', '몇', '건', '번', '적', '지금까지', '총', '전부', '모두', '합계', '내가', '나', '내', '했었지', '했었어', '샀어', '샀지', '산', '것', '거', '무슨', '어떤', '다']);
+  const STOP = new Set(['얼마', '얼마나', '했어', '했지', '했나', '줬어', '줬지', '준', '받았어', '받았지', '보냈어', '보냈지', '언제', '뭐', '무엇', '어디', '알려줘', '알려', '있어', '있지', '몇', '건', '번', '적', '지금까지', '총', '전부', '모두', '합계', '내가', '나', '내', '했었지', '했었어', '샀어', '샀지', '산', '것', '거', '무슨', '어떤', '다', '축의금', '부조금', '조의금', '축의', '부조', '조의', '경조사', '경조사비', '금액', '가격', '얼마였지', '내역']);
   const TYPE_WORDS = [
     ['event', /경조사|축의|부조|조의|결혼|부고|돌잔치|개업|상조|보냈|받았|줬|준/],
     ['item', /구매|구입|샀|산 |보증|a\/s|as |물품|영수증|가격/i],
@@ -199,7 +199,9 @@
     // 종류 단서가 없으면 전체, 사람이 지정되면 경조사·메모·사람만이 자연스럽다.
     let types = f.types.length ? f.types : null;
     if (!types && personIds) types = ['event', 'memo', 'person'];
-    let recs = searchRecords(db, { q: personIds ? '' : f.keywords.join(' '), any: true, types, from, to, personIds, limit: 0 });
+    const kws = personIds ? [] : [...f.keywords, ...f.kinds];
+    let recs = searchRecords(db, { q: kws.join(' '), any: true, types, from, to, personIds, limit: 0 });
+    if (!recs.length && kws.length) recs = searchRecords(db, { q: '', types, from, to, personIds, limit: 0 }); // 키워드로 못 찾으면 기간·사람·종류만으로
     if (personIds && f.keywords.length) { // 사람이 있으면 키워드는 순위에만 반영
       const kw = f.keywords.map(norm);
       recs = recs.map(r => ({ ...r, score: r.score + kw.filter(k => r.text.includes(k)).length * 10 })).sort((a, b) => b.score - a.score || (b.date || '').localeCompare(a.date || ''));
