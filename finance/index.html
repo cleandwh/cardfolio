@@ -120,6 +120,7 @@ const daysIn = (y, m0) => new Date(y, m0 + 1, 0).getDate();
 const todayStr = () => fmtDate(new Date());
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const num = v => { const n = parseFloat(String(v ?? '').replace(/[,\s원%]/g, '')); return isFinite(n) ? n : 0; };
+const actions = {}; // data-act 클릭 핸들러 모음
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 
 /* ---------- 저장소 ---------- */
@@ -336,7 +337,355 @@ function subForm(sub) {
    화면: 홈 / 내역 / 계산기 (이후 단계에서 구현)
    ============================================================ */
 //@@HOME@@
-//@@LEDGER@@
+/* ============================================================
+   가계부 (M3) — 엑셀 파싱 순수 함수는 PARSE-START~END 사이 (화면과 무관, 단독 검증 가능)
+   ============================================================ */
+// ==PARSE-START==
+const ALIASES = {
+  date: ['날짜', '거래일', '거래일자', '일자'], time: ['시간', '거래시간'], type: ['타입', '구분', '유형'],
+  category: ['대분류', '카테고리', '분류'], subcategory: ['소분류'], merchant: ['내용', '가맹점', '사용처', '적요'],
+  amount: ['금액', '거래금액', '이용금액'], currency: ['화폐'], method: ['결제수단', '수단', '카드', '계좌'], memo: ['메모', '비고']
+};
+const FIELD_LABEL = { date: '날짜', time: '시간', type: '타입(지출/수입/이체)', category: '대분류', subcategory: '소분류', merchant: '내용(가맹점)', amount: '금액', currency: '화폐', method: '결제수단', memo: '메모' };
+const normH = v => String(v ?? '').replace(/\s+/g, '').toLowerCase();
+const p2 = n => String(n).padStart(2, '0');
+/* 처음 20행 안에서 날짜·금액 열 이름을 동시에 가진 행 = 헤더 */
+function findHeaderRow(aoa) {
+  for (let r = 0; r < Math.min(20, aoa.length); r++) {
+    const cells = (aoa[r] || []).map(normH);
+    if (cells.some(c => ALIASES.date.includes(c)) && cells.some(c => ALIASES.amount.includes(c))) return r;
+  }
+  return -1;
+}
+/* 헤더 이름으로 열 찾기 (열 위치 고정 안 함) */
+function mapColumns(headerRow) {
+  const cells = (headerRow || []).map(normH), map = {}, used = new Set();
+  for (const f of Object.keys(ALIASES)) for (const a of ALIASES[f]) {
+    const i = cells.findIndex((c, k) => c === a && !used.has(k));
+    if (i >= 0) { map[f] = i; used.add(i); break; }
+  }
+  return map;
+}
+const ymd = (y, m, d) => (m >= 1 && m <= 12 && d >= 1 && d <= new Date(y, m, 0).getDate() && y >= 1990 && y <= 2100) ? `${y}-${p2(m)}-${p2(d)}` : '';
+function normDate(v) {
+  if (v instanceof Date) { if (isNaN(v)) return ''; const d = new Date(v.getTime() + 30000); return ymd(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+  if (typeof v === 'number') {
+    if (Number.isInteger(v) && v >= 19900101 && v <= 21001231) return ymd(Math.floor(v / 10000), Math.floor(v / 100) % 100, v % 100);
+    if (v > 20000 && v < 80000) { const d = new Date(Math.floor(v - 25569) * 86400000); return ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); } // 엑셀 일련번호
+    return '';
+  }
+  const s = String(v ?? '').trim();
+  let m = /^(\d{4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/.exec(s);
+  if (m) return ymd(+m[1], +m[2], +m[3]);
+  m = /^(\d{4})(\d{2})(\d{2})$/.exec(s);
+  return m ? ymd(+m[1], +m[2], +m[3]) : '';
+}
+function normTime(v, formatted) {
+  const hm = s => { const m = /(\d{1,2}):(\d{2})/.exec(String(s ?? '')); return m && +m[1] < 24 && +m[2] < 60 ? `${p2(+m[1])}:${m[2]}` : ''; };
+  if (typeof v === 'number') { if (v >= 0 && v < 1) { const t = Math.round(v * 1440) % 1440; return `${p2(Math.floor(t / 60))}:${p2(t % 60)}`; } return ''; }
+  if (v instanceof Date) { const f = hm(formatted); if (f) return f; const d = new Date(v.getTime() + 30000); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; }
+  return hm(v);
+}
+function normAmount(v) {
+  if (typeof v === 'number') return v;
+  let s = String(v ?? '').replace(/[,\s원₩]/g, '').replace(/[−–]/g, '-');
+  if (/^\(.*\)$/.test(s)) s = '-' + s.slice(1, -1);
+  return /^[+-]?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN;
+}
+function normType(v) { const s = String(v ?? ''); return s.includes('지출') ? 'expense' : s.includes('수입') ? 'income' : s.includes('이체') ? 'transfer' : ''; }
+/* FNV-1a 32비트 → base36 */
+function fnv(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); }
+const txnKey = t => [t.date, t.time, t.amount, t.merchant, t.method].join('|');
+/* 시트 행 → 거래 목록. 같은 키가 파일 안에서 n번째면 '#n'을 붙여 id 생성 */
+function parseRows(aoa, aoaW, hIdx, map, opts = {}) {
+  const txns = [], seen = new Map(); let skipped = 0, foreign = 0;
+  const str = v => (v instanceof Date || v == null) ? '' : String(v).trim();
+  for (let r = hIdx + 1; r < aoa.length; r++) {
+    const row = aoa[r];
+    if (!row || row.every(c => c === '' || c == null)) continue;
+    const g = k => map[k] == null ? '' : row[map[k]];
+    const date = normDate(g('date')), amt = normAmount(g('amount'));
+    if (!date || !isFinite(amt) || amt === 0) { skipped++; continue; }
+    let type = map.type == null ? '' : normType(g('type'));
+    if (!type) type = amt < 0 ? 'expense' : (opts.positiveIsExpense ? 'expense' : 'income');
+    const cur = str(g('currency')).toUpperCase();
+    if (cur && !['KRW', '원', '₩', 'WON'].includes(cur)) foreign++;
+    const t = {
+      id: '', date, time: normTime(g('time'), map.time != null && aoaW && aoaW[r] ? aoaW[r][map.time] : ''), type, amount: Math.round(Math.abs(amt)),
+      category: str(g('category')), subcategory: str(g('subcategory')), merchant: str(g('merchant')), method: str(g('method')), memo: str(g('memo')), source: opts.source || 'banksalad'
+    };
+    const key = txnKey(t), n = (seen.get(key) || 0) + 1; seen.set(key, n);
+    t.id = fnv(n > 1 ? key + '#' + n : key);
+    txns.push(t);
+  }
+  return { txns, skipped, foreign };
+}
+/* 사용자 규칙: 키워드가 가맹점(또는 메모)에 포함되면 적용. 먼저 등록된 규칙 우선 */
+function ruleFor(t, rules) {
+  for (const r of rules) {
+    const kw = (r.keyword || '').trim().toLowerCase(); if (!kw) continue;
+    if (String((r.field === 'memo' ? t.memo : t.merchant) || '').toLowerCase().includes(kw)) return r;
+  }
+  return null;
+}
+// ==PARSE-END==
+
+/* ---------- 월 · 집계 ---------- */
+/* 월 시작일(monthStartDay) 기준 소속 월 키 'YYYY-MM' */
+function periodKey(dateStr) {
+  const y = +dateStr.slice(0, 4), m = +dateStr.slice(5, 7), d = +dateStr.slice(8, 10), msd = S.settings.monthStartDay || 1;
+  if (d >= msd) return `${y}-${pad(m)}`;
+  return m === 1 ? `${y - 1}-12` : `${y}-${pad(m - 1)}`;
+}
+const shiftKey = (k, n) => { const t = (+k.slice(0, 4)) * 12 + (+k.slice(5, 7) - 1) + n; return `${Math.floor(t / 12)}-${pad(t % 12 + 1)}`; };
+function keyLabel(k) {
+  const msd = S.settings.monthStartDay || 1, y = +k.slice(0, 4), m = +k.slice(5, 7);
+  if (msd === 1) return `${y}년 ${m}월`;
+  const e = shiftKey(k, 1), ed = new Date(+e.slice(0, 4), +e.slice(5, 7) - 1, msd - 1);
+  return `${y}년 ${m}월 (${m}/${msd}~${ed.getMonth() + 1}/${ed.getDate()})`;
+}
+const curKey = () => periodKey(todayStr());
+const getMonth = () => ui.month || (ui.month = curKey());
+const isSpend = t => t.type === 'expense' || (t.type === 'transfer' && !S.settings.excludeTransfers);
+const txnsOf = k => S.transactions.filter(t => periodKey(t.date) === k);
+const spendSum = list => list.reduce((a, t) => a + (isSpend(t) ? t.amount : 0), 0);
+const isUnc = t => !t.category || t.category === '미분류';
+function applyRulesTo(list) { let n = 0; for (const t of list) { const r = ruleFor(t, S.rules); if (r && (t.category !== r.category || t.subcategory !== (r.subcategory || t.subcategory))) { t.category = r.category; if (r.subcategory) t.subcategory = r.subcategory; n++; } } return n; }
+const methodsList = () => [...new Set(S.transactions.map(t => t.method).filter(Boolean))].sort();
+
+/* ---------- 내역 화면 ---------- */
+function filteredTxns() {
+  const q = ui.q.trim().toLowerCase();
+  return txnsOf(getMonth()).filter(t =>
+    (!ui.fType || t.type === ui.fType) && (!ui.fCat || t.category === ui.fCat) && (!ui.fMethod || t.method === ui.fMethod) && (!ui.fUnc || isUnc(t)) &&
+    (!q || (t.merchant || '').toLowerCase().includes(q) || (t.memo || '').toLowerCase().includes(q)))
+    .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+}
+const TYPE_LABEL = { expense: '지출', income: '수입', transfer: '이체' };
+function ledgerList() {
+  const all = txnsOf(getMonth()), list = filteredTxns();
+  const sp = spendSum(list), inc = list.reduce((a, t) => a + (t.type === 'income' ? t.amount : 0), 0);
+  let html = `<div class="card"><div class="kv"><span>지출 (${list.length}건 표시)</span><b>${won(sp)}원</b></div><div class="kv"><span>수입</span><b style="color:var(--good)">${won(inc)}원</b></div></div>`;
+  if (!all.length) return html + `<div class="empty">이 달에는 거래가 없어요.<br>설정에서 엑셀을 올리거나 + 버튼으로 직접 추가하세요.</div>`;
+  if (!list.length) return html + '<div class="empty">조건에 맞는 거래가 없어요.</div>';
+  let day = '';
+  html += '<div class="card" style="padding:4px 16px">';
+  for (const t of list) {
+    if (t.date !== day) { day = t.date; html += `<div class="dayh">${+t.date.slice(5, 7)}월 ${+t.date.slice(8)}일 (${WEEK[parseDate(t.date).getDay()]})</div>`; }
+    const sign = t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '';
+    html += `<div class="tx" data-act="tx-edit" data-id="${esc(t.id)}"><div class="l"><b>${esc(t.merchant || '(내용 없음)')}</b><span class="sub">${isUnc(t) ? '<span class="badge warn">미분류</span>' : esc(t.category + (t.subcategory ? ' · ' + t.subcategory : ''))}${t.method ? ' · ' + esc(t.method) : ''}${t.type === 'transfer' ? ' · 이체' : ''}</span></div>
+      <div class="r ${t.type === 'income' ? 'inc' : t.type === 'transfer' ? 'trf' : ''}">${sign}${won(t.amount)}</div></div>`;
+  }
+  return html + '</div>';
+}
+function viewLedger() {
+  const k = getMonth();
+  return `<div class="mbar"><button class="btn sm" data-act="month" data-d="-1" aria-label="이전 달">◀</button><b>${esc(keyLabel(k))}</b><button class="btn sm" data-act="month" data-d="1" aria-label="다음 달">▶</button></div>
+    <input id="lq" data-lf="q" placeholder="가맹점·메모 검색" value="${esc(ui.q)}">
+    <div class="grid2" style="margin-top:8px">
+      <select data-lf="fType" aria-label="타입"><option value="">타입 전체</option>${Object.entries(TYPE_LABEL).map(([v, l]) => `<option value="${v}"${ui.fType === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select data-lf="fCat" aria-label="카테고리"><option value="">카테고리 전체</option>${catOptions(ui.fCat)}</select>
+      <select data-lf="fMethod" aria-label="결제수단"><option value="">결제수단 전체</option>${methodsList().map(m => `<option${m === ui.fMethod ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>
+      <label class="chk" style="margin:0"><input type="checkbox" data-lf="fUnc"${ui.fUnc ? ' checked' : ''}> 미분류만 (${txnsOf(k).filter(isUnc).length})</label>
+    </div>
+    <button class="btn pri block" data-act="tx-add">+ 거래 직접 추가</button>
+    <div id="lg-list">${ledgerList()}</div>`;
+}
+function txnForm(t) {
+  const isNew = !t;
+  const x = t || { date: todayStr(), time: '', type: 'expense', amount: '', category: '', subcategory: '', merchant: '', method: '', memo: '' };
+  openSheet(`<h3>${isNew ? '거래 추가' : '거래 수정'}</h3><form id="txf" autocomplete="off">
+    <div class="grid2"><label class="f">날짜<input type="date" name="date" value="${esc(x.date)}" required></label><label class="f">시간(선택)<input type="time" name="time" value="${esc(x.time)}"></label></div>
+    <div class="grid2"><label class="f">타입<select name="type">${Object.entries(TYPE_LABEL).map(([v, l]) => `<option value="${v}"${x.type === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="f">금액(원)<input name="amount" inputmode="numeric" value="${esc(x.amount)}" required></label></div>
+    <label class="f">내용(가맹점)<input name="merchant" value="${esc(x.merchant)}"></label>
+    <div class="grid2"><label class="f">대분류<input name="category" list="catlist2" value="${esc(x.category)}"></label><label class="f">소분류<input name="subcategory" value="${esc(x.subcategory)}"></label></div>
+    <datalist id="catlist2">${allCategories().map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+    <label class="f">결제수단<input name="method" list="mlist" value="${esc(x.method)}"></label><datalist id="mlist">${methodsList().map(m => `<option value="${esc(m)}">`).join('')}</datalist>
+    <label class="f">메모<input name="memo" value="${esc(x.memo)}"></label>
+    <div class="row" style="justify-content:space-between;margin-top:16px"><span>${isNew ? '' : '<button type="button" class="btn bad" data-act="tx-del">삭제</button>'}</span>
+    <span class="row"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri" type="submit">저장</button></span></div></form>`, {
+    onMount(root) {
+      root.querySelector('[data-act=tx-del]')?.addEventListener('click', async () => {
+        if (await ask('거래 삭제', '이 거래를 삭제할까요?', '삭제', true)) { S.transactions = S.transactions.filter(y => y !== t); save(); closeSheet(); render(); }
+        else txnForm(t);
+      });
+      root.querySelector('#txf').addEventListener('submit', async e => {
+        e.preventDefault();
+        const f = formData(root), amount = Math.round(Math.abs(num(f.amount)));
+        if (!parseDate(f.date) || amount <= 0) { toast('날짜와 금액(1원 이상)을 확인하세요.'); return; }
+        const rec = { id: isNew ? uid() : t.id, date: f.date, time: f.time || '', type: f.type, amount, category: f.category.trim(), subcategory: f.subcategory.trim(), merchant: f.merchant.trim(), method: f.method.trim(), memo: f.memo.trim(), source: isNew ? 'manual' : t.source };
+        const catChanged = !isNew && (rec.category !== t.category || rec.subcategory !== t.subcategory) && rec.category && rec.merchant;
+        if (isNew) S.transactions.push(rec); else Object.assign(t, rec);
+        closeSheet();
+        if (catChanged) {
+          const others = S.transactions.filter(y => y !== t && y.merchant === rec.merchant && (y.category !== rec.category || y.subcategory !== rec.subcategory));
+          const r = await dialog({ title: '같은 가맹점도 바꿀까요?', body: `'${esc(rec.merchant)}'을(를) <b>${esc(rec.category)}</b>(으)로 분류하는 규칙을 저장하고,<br>같은 가맹점의 다른 거래 ${others.length}건에도 적용할까요?<br><span class="sub">앞으로 올리는 엑셀에도 이 규칙이 먼저 적용돼요.</span>`, buttons: [{ label: '이 거래만', value: 'one' }, { label: '규칙 저장 + 모두 적용', value: 'all', cls: 'pri' }] });
+          if (r === 'all') {
+            const ex = S.rules.find(q => q.keyword === rec.merchant && q.field === 'merchant');
+            if (ex) { ex.category = rec.category; ex.subcategory = rec.subcategory; } else S.rules.unshift({ id: uid(), keyword: rec.merchant, field: 'merchant', category: rec.category, subcategory: rec.subcategory });
+            others.forEach(y => { y.category = rec.category; y.subcategory = rec.subcategory; });
+          }
+        }
+        save(); render(); toast('저장했어요.');
+      });
+    }
+  });
+}
+actions['tx-add'] = () => txnForm(null);
+actions['tx-edit'] = el => txnForm(S.transactions.find(t => t.id === el.dataset.id));
+actions.month = el => { ui.month = shiftKey(getMonth(), +el.dataset.d); render(); };
+
+/* ---------- 엑셀 업로드 (SheetJS는 업로드할 때만 불러옴) ---------- */
+const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+let xlsxPromise = null;
+function needXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  return xlsxPromise || (xlsxPromise = new Promise((ok, no) => {
+    const s = document.createElement('script'); s.src = XLSX_URL;
+    s.onload = ok; s.onerror = () => { xlsxPromise = null; s.remove(); no(new Error('SheetJS 로드 실패')); };
+    document.head.appendChild(s);
+  }));
+}
+let pending = []; // 미리보기 중인 파일들
+function sheetAoa(wb, name, formatted) {
+  return XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: !formatted, defval: '' });
+}
+/* 파일 하나 읽기 → 헤더 자동 탐지 */
+async function readUpload(file) {
+  const e = { name: file.name, txns: null, skipped: 0, foreign: 0, error: '' };
+  try {
+    let wb;
+    if (/\.csv$/i.test(file.name)) { // 카드사 CSV는 EUC-KR인 경우가 많음
+      const buf = await readFileBuf(file); let text;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (_) { text = new TextDecoder('euc-kr').decode(buf); }
+      wb = XLSX.read(text, { type: 'string', cellDates: true });
+    } else wb = XLSX.read(await readFileBuf(file), { type: 'array', cellDates: true });
+    e.wb = wb; e.source = /\.csv$/i.test(file.name) ? 'csv' : 'banksalad';
+    for (const sn of wb.SheetNames) {
+      const aoa = sheetAoa(wb, sn), h = findHeaderRow(aoa);
+      if (h >= 0) { Object.assign(e, parseSheet(e, sn, h, mapColumns(aoa[h]), {})); break; }
+    }
+  } catch (err) { e.error = '파일을 읽지 못했어요.'; }
+  return e;
+}
+function parseSheet(e, sheetName, hIdx, map, opts) {
+  const aoa = sheetAoa(e.wb, sheetName), aoaW = map.time != null ? sheetAoa(e.wb, sheetName, true) : null;
+  const r = parseRows(aoa, aoaW, hIdx, map, { source: e.source, positiveIsExpense: opts.positiveIsExpense });
+  return { sheetName, txns: r.txns, skipped: r.skipped, foreign: r.foreign };
+}
+/* 중복 판정 + 분류 규칙 적용 계산. 아직 저장하지 않음 */
+function planImport(entries) {
+  const byId = new Map(S.transactions.map(t => [t.id, t]));
+  const added = [], per = []; let from = '', to = '';
+  for (const e of entries) {
+    const st = { name: e.name, added: 0, dup: 0, skipped: e.skipped, foreign: e.foreign, need: !e.txns, error: e.error }; per.push(st);
+    for (const raw of e.txns || []) {
+      if (!from || raw.date < from) from = raw.date; if (raw.date > to) to = raw.date;
+      const t = Object.assign({}, raw); let id = t.id, dup = false;
+      while (byId.has(id)) { // id가 같고 내용도 같으면 중복. 내용이 다르면(해시 충돌) 다른 id로 보관
+        const x = byId.get(id);
+        if (x.date === t.date && x.time === t.time && x.amount === t.amount && x.merchant === t.merchant && x.method === t.method) { dup = true; break; }
+        id += '~';
+      }
+      if (dup) { st.dup++; continue; }
+      t.id = id; byId.set(id, t);
+      const r = ruleFor(t, S.rules);
+      if (r) { t.category = r.category; if (r.subcategory) t.subcategory = r.subcategory; }
+      if (!t.category) t.category = '미분류';
+      added.push(t); st.added++;
+    }
+  }
+  return { added, per, from, to, dup: per.reduce((a, s) => a + s.dup, 0), spend: spendSum(added) };
+}
+function showPreview() {
+  const p = planImport(pending);
+  openSheet(`<h3>가져오기 미리보기</h3>
+    <div class="card"><div class="kv"><span>새 거래</span><b>${p.added.length}건</b></div><div class="kv"><span>중복(건너뜀)</span><b>${p.dup}건</b></div>
+      <div class="kv"><span>기간</span><b>${p.from ? p.from + ' ~ ' + p.to : '-'}</b></div><div class="kv"><span>새 거래 지출 합계</span><b>${won(p.spend)}원</b></div></div>
+    ${p.per.map((s, i) => `<div class="card"><div class="head"><b style="overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</b>${s.need ? `<button class="btn sm pri" data-act="map-open" data-i="${i}">열 지정</button>` : ''}</div>
+      <div class="sub">${s.error ? esc(s.error) : s.need ? '날짜·금액 열을 자동으로 찾지 못했어요. [열 지정]으로 직접 알려주세요.' : `새 ${s.added}건 · 중복 ${s.dup}건${s.skipped ? ` · 읽지 못한 행 ${s.skipped}개` : ''}`}</div>
+      ${s.foreign ? `<div class="sub" style="color:var(--warn)">원화가 아닌 거래 ${s.foreign}건 포함 — 금액을 원 단위로 취급합니다.</div>` : ''}</div>`).join('')}
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-act="imp-cancel">취소</button><button class="btn pri" data-act="imp-go"${p.added.length ? '' : ' disabled'}>가져오기 (${p.added.length}건)</button></div>`);
+}
+actions['imp-cancel'] = () => { pending = []; closeSheet(); };
+actions['imp-go'] = () => {
+  const p = planImport(pending), at = new Date().toISOString();
+  if (!p.added.length) return;
+  S.transactions.push(...p.added);
+  p.per.forEach(s => { if (!s.need && !s.error) S.importLog.unshift({ at, fileName: s.name, added: s.added, skipped: s.dup }); });
+  S.importLog = S.importLog.slice(0, 50);
+  const latest = p.added.reduce((a, t) => t.date > a ? t.date : a, '');
+  ui.month = periodKey(latest);
+  if (save()) toast(`${p.added.length}건을 가져왔어요.`);
+  pending = []; closeSheet(); render();
+};
+/* 열 매핑 화면: 헤더를 못 찾은 파일(일반 카드사 CSV 등) */
+function mapSheet(i) {
+  const e = pending[i], st = e.mapState || (e.mapState = { sheet: e.wb.SheetNames[0], row: 1, map: null, pos: false });
+  const aoa = sheetAoa(e.wb, st.sheet), hdr = aoa[st.row - 1] || [];
+  if (!st.map) st.map = mapColumns(hdr);
+  const opts = f => `<option value="">(사용 안 함)</option>${hdr.map((c, k) => `<option value="${k}"${st.map[f] === k ? ' selected' : ''}>${k + 1}열: ${esc(String(c).slice(0, 14) || '(빈 칸)')}</option>`).join('')}`;
+  openSheet(`<h3>열 지정 — ${esc(e.name)}</h3><div class="sub">각 항목이 어느 열인지 알려주세요. 날짜와 금액은 꼭 필요해요.</div>
+    <div class="grid2"><label class="f">시트<select data-m="sheet">${e.wb.SheetNames.map(n => `<option${n === st.sheet ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <label class="f">제목 행 번호<input data-m="row" inputmode="numeric" value="${st.row}"></label></div>
+    ${Object.keys(FIELD_LABEL).filter(f => f !== 'currency').map(f => `<label class="f">${FIELD_LABEL[f]}${f === 'date' || f === 'amount' ? ' *' : ''}<select data-m="f:${f}">${opts(f)}</select></label>`).join('')}
+    <label class="chk"><input type="checkbox" data-m="pos"${st.pos ? ' checked' : ''}> 카드 이용내역이에요 (양수 금액 = 지출)</label>
+    <div class="card" style="overflow:auto"><div class="sub">미리보기(제목 행 아래 3행)</div><table class="t">${aoa.slice(st.row, st.row + 3).map(r => `<tr>${r.slice(0, 6).map(c => `<td style="text-align:left">${esc(c instanceof Date ? fmtDate(c) : String(c).slice(0, 12))}</td>`).join('')}</tr>`).join('')}</table></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="map-back">뒤로</button><button class="btn pri" data-act="map-apply" data-i="${i}">적용</button></div>`, {
+    onMount(root) {
+      root.addEventListener('change', ev => {
+        const m = ev.target.dataset.m; if (!m) return;
+        if (m === 'sheet') { st.sheet = ev.target.value; st.row = 1; st.map = null; }
+        else if (m === 'row') { st.row = Math.max(1, Math.round(num(ev.target.value)) || 1); st.map = null; }
+        else if (m === 'pos') { st.pos = ev.target.checked; return; }
+        else if (m.startsWith('f:')) { st.map[m.slice(2)] = ev.target.value === '' ? undefined : +ev.target.value; return; }
+        mapSheet(i);
+      });
+    }
+  });
+}
+actions['map-open'] = el => mapSheet(+el.dataset.i);
+actions['map-back'] = () => showPreview();
+actions['map-apply'] = el => {
+  const e = pending[+el.dataset.i], st = e.mapState;
+  if (st.map.date == null || st.map.amount == null) { toast('날짜와 금액 열을 지정하세요.'); return; }
+  const m = {}; for (const k in st.map) if (st.map[k] != null) m[k] = st.map[k];
+  Object.assign(e, parseSheet(e, st.sheet, st.row - 1, m, { positiveIsExpense: st.pos }));
+  if (!e.txns.length) { toast('읽을 수 있는 거래가 없어요. 제목 행/열을 다시 확인하세요.'); e.txns = null; return; }
+  showPreview();
+};
+async function handleUploads(files) {
+  toast('파일을 읽는 중…');
+  try { await needXLSX(); } catch (err) { toast('엑셀 읽기 도구를 불러오지 못했어요. 인터넷 연결을 확인하세요.'); return; }
+  pending = [];
+  for (const f of files) pending.push(await readUpload(f));
+  $('#toast').hidden = true; showPreview();
+}
+
+/* ---------- 설정: 업로드·규칙·기록 ---------- */
+function setUpload() {
+  return `<h2>엑셀 올리기</h2><div class="card"><div class="sub">뱅크샐러드 내보내기 엑셀(.xlsx)을 여러 개 한꺼번에 올릴 수 있어요. 파일은 이 기기 안에서만 읽고 어디에도 전송하지 않아요. 같은 기간을 다시 올려도 이미 있는 거래는 건너뜁니다.</div>
+    <button class="btn pri block" data-act="up-pick">엑셀/CSV 파일 선택</button><input type="file" id="up-file" accept=".xlsx,.xls,.csv" multiple hidden></div>`;
+}
+function setRules() {
+  return `<h2>분류 규칙</h2><div class="card"><div class="sub">가맹점(또는 메모)에 키워드가 들어 있으면 지정한 분류로 바꿔요. 뱅크샐러드 분류보다 우선합니다.</div>
+    ${S.rules.map(r => `<div class="kv"><span>${r.field === 'memo' ? '메모' : '가맹점'}에 “${esc(r.keyword)}” → <b>${esc(r.category)}${r.subcategory ? ' · ' + esc(r.subcategory) : ''}</b></span><button class="btn sm bad" data-act="rule-del" data-id="${esc(r.id)}">삭제</button></div>`).join('') || '<div class="sub" style="margin-top:6px">아직 규칙이 없어요.</div>'}
+    <form id="rulef" class="grid2" style="margin-top:10px" autocomplete="off"><input name="keyword" placeholder="키워드" required><select name="field"><option value="merchant">가맹점에서</option><option value="memo">메모에서</option></select>
+      <input name="category" list="rcat" placeholder="대분류" required><input name="subcategory" placeholder="소분류(선택)"><datalist id="rcat">${allCategories().map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      <button class="btn pri" type="submit" style="grid-column:1/-1">규칙 추가</button></form>
+    <button class="btn block" data-act="rules-apply">규칙을 기존 거래에 모두 적용</button></div>`;
+}
+function setLog() {
+  return `<h2>업로드 기록</h2><div class="card">${S.importLog.slice(0, 10).map(l => `<div class="kv"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(l.fileName)}<br><span class="sub">${esc(new Date(l.at).toLocaleString('ko-KR'))}</span></span><span class="sub" style="text-align:right">새 ${l.added}건<br>중복 ${l.skipped}건</span></div>`).join('') || '<div class="sub">기록이 없어요.</div>'}</div>`;
+}
+actions['up-pick'] = () => $('#up-file').click();
+actions['rule-del'] = el => { S.rules = S.rules.filter(r => r.id !== el.dataset.id); save(); render(); };
+actions['rules-apply'] = async () => {
+  if (!await ask('규칙 적용', '모든 거래에 규칙을 다시 적용합니다. 직접 바꾼 분류도 규칙이 우선해요.', '적용')) return;
+  const n = applyRulesTo(S.transactions); save(); render(); toast(`${n}건의 분류를 바꿨어요.`);
+};
+function refreshLedgerList() { const el = $('#lg-list'); if (el) el.innerHTML = ledgerList(); }
 /* ============================================================
    계산기 (M2) — 순수 계산 함수는 CALC-START~END 사이에 둠 (화면과 무관, 단독 검증 가능)
    ============================================================ */
@@ -499,13 +848,13 @@ function viewCalc() {
    설정 + 백업
    ============================================================ */
 function viewSettings() {
-  return `<!--@@SET_UPLOAD@@-->
+  return `${setUpload()}
     <h2>월 기준</h2>
     <div class="card">
       <label class="f" style="margin-top:0">월 시작일 (월급일 기준으로 보려면 변경)<input id="set-msd" inputmode="numeric" value="${S.settings.monthStartDay}"></label>
       <label class="chk"><input type="checkbox" id="set-xfer"${S.settings.excludeTransfers ? ' checked' : ''}> '이체'는 지출 통계에서 제외</label>
     </div>
-    <!--@@SET_RULES@@-->
+    ${setRules()}
     <h2>백업</h2>
     <div class="card"><div class="sub">브라우저 데이터를 지우면 기록이 사라져요. 가끔 백업 파일을 내려받아 보관하세요.<br>백업 파일에는 개인 금융 정보가 들어 있으니 공개 저장소에 올리지 마세요.</div>
       <div class="row" style="margin-top:10px"><button class="btn pri" data-act="backup-out">백업 내보내기</button>
@@ -514,7 +863,7 @@ function viewSettings() {
     <h2>데이터 삭제</h2>
     <div class="card"><div class="sub">거래·구독·규칙·설정을 모두 지웁니다. 되돌릴 수 없어요.</div>
       <button class="btn bad block" data-act="wipe">전체 삭제</button></div>
-    <!--@@SET_LOG@@-->
+    ${setLog()}
     <div class="disc" id="ver" data-act="secret">저장 위치: 이 브라우저(localStorage) · 거래 ${S.transactions.length}건 · 구독 ${S.subscriptions.length}개</div>
     <!--@@SET_SAMPLE@@-->`;
 }
@@ -560,7 +909,7 @@ function render() {
 }
 function goTab(t) { ui.tab = t; render(); window.scrollTo(0, 0); }
 
-const actions = {
+Object.assign(actions, {
   close: () => closeSheet(),
   'sub-add': () => subForm(null),
   'sub-edit': el => subForm(S.subscriptions.find(s => s.id === el.dataset.id)),
@@ -578,7 +927,7 @@ const actions = {
   wipe: wipeAll,
   secret: () => { if (++ui.setSecret >= 5) { ui.setSecret = 0; ui.showSample = !ui.showSample; render(); } },
   go: el => goTab(el.dataset.tab)
-};
+});
 document.addEventListener('click', e => {
   const tab = e.target.closest('[data-tab]');
   if (tab && tab.closest('#tabs')) { goTab(tab.dataset.tab); return; }
@@ -590,12 +939,13 @@ document.addEventListener('change', e => {
   if (t.id === 'backup-file' && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
   else if (t.id === 'set-msd') { S.settings.monthStartDay = Math.min(28, Math.max(1, Math.round(num(t.value)) || 1)); t.value = S.settings.monthStartDay; save(); toast('월 시작일을 저장했어요.'); }
   else if (t.id === 'set-xfer') { S.settings.excludeTransfers = t.checked; save(); toast('저장했어요.'); }
-  else if (typeof onChangeExtra === 'function') onChangeExtra(e);
+  else if (t.id === 'up-file' && t.files.length) { handleUploads([...t.files]); t.value = ''; }
 });
 document.addEventListener('input', e => { if (typeof onInputExtra === 'function') onInputExtra(e); });
 
 function onInputExtra(e) {
   const t = e.target;
+  if (t.dataset && t.dataset.lf) { ui[t.dataset.lf] = t.type === 'checkbox' ? t.checked : t.value; refreshLedgerList(); return; }
   if (t.closest && t.closest('#calc-form') && t.dataset.k) {
     const id = ui.calcTab; (S.calc[id] = S.calc[id] || {})[t.dataset.k] = t.value; save();
     $('#calc-out').innerHTML = calcOut();
@@ -603,6 +953,13 @@ function onInputExtra(e) {
 }
 actions['calc-tab'] = el => { ui.calcTab = el.dataset.id; render(); };
 actions['calc-reset'] = () => { delete S.calc[ui.calcTab]; save(); render(); };
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'rulef') return;
+  e.preventDefault();
+  const f = formData(e.target), r = { id: uid(), keyword: f.keyword.trim(), field: f.field, category: f.category.trim(), subcategory: f.subcategory.trim() };
+  if (!r.keyword || !r.category) return;
+  S.rules.push(r); save(); render(); toast('규칙을 추가했어요. 기존 거래에는 아래 버튼으로 적용하세요.');
+});
 //@@EXTRA@@
 render();
 </script>
