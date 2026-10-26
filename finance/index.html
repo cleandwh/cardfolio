@@ -337,7 +337,163 @@ function subForm(sub) {
    ============================================================ */
 //@@HOME@@
 //@@LEDGER@@
-//@@CALC@@
+/* ============================================================
+   계산기 (M2) — 순수 계산 함수는 CALC-START~END 사이에 둠 (화면과 무관, 단독 검증 가능)
+   ============================================================ */
+// ==CALC-START==
+const rnd = Math.round;
+/* 대출 상환표. method: annuity(원리금균등) | principal(원금균등) | bullet(만기일시), grace: 거치(이자만 내는) 개월 수 */
+function loanSchedule({ P, rate, n, method, grace = 0 }) {
+  const r = rate / 12 / 100;
+  const g = method === 'bullet' ? 0 : Math.min(Math.max(0, Math.floor(grace)), n - 1);
+  const m = n - g; // 원금을 갚는 개월 수
+  let A = 0;
+  if (method === 'annuity') A = rnd(r === 0 ? P / m : P * r * Math.pow(1 + r, m) / (Math.pow(1 + r, m) - 1));
+  const rows = []; let bal = P, totalInterest = 0;
+  for (let i = 1; i <= n; i++) {
+    const interest = rnd(bal * r);
+    let principal;
+    if (method === 'bullet') principal = i === n ? bal : 0;
+    else if (i <= g) principal = 0;
+    else if (i === n) principal = bal; // 마지막 회차: 잔액 오차 보정
+    else if (method === 'annuity') principal = Math.min(bal, A - interest);
+    else principal = Math.min(bal, rnd(P / m));
+    bal -= principal; totalInterest += interest;
+    rows.push({ i, payment: principal + interest, principal, interest, balance: bal });
+  }
+  return { rows, monthly: A, totalInterest, totalPaid: P + totalInterest };
+}
+/* 중도상환 효과 (원리금균등 대출 기준): 기간 단축 vs 월상환액 감소 */
+function prepayEffect({ B, rate, m, X, feePct }) {
+  X = Math.min(Math.max(0, X), B);
+  const base = loanSchedule({ P: B, rate, n: m, method: 'annuity' });
+  const fee = rnd(X * feePct / 100), B2 = B - X, r = rate / 12 / 100;
+  let shorten = { months: 0, interest: 0 };
+  if (B2 > 0) { // 월상환액 유지, 기간 단축
+    let bal = B2, k = 0, interest = 0;
+    while (bal > 0 && k < 1200) {
+      const it = rnd(bal * r); k++;
+      if (base.monthly <= it) { k = Infinity; break; }
+      const pay = Math.min(base.monthly, bal + it);
+      interest += it; bal -= pay - it;
+    }
+    shorten = { months: k, interest };
+  }
+  const reduce = B2 > 0 ? loanSchedule({ P: B2, rate, n: m, method: 'annuity' }) : { monthly: 0, totalInterest: 0 };
+  return {
+    base: { monthly: base.monthly, interest: base.totalInterest }, fee, balanceAfter: B2,
+    shorten: { months: shorten.months, interest: shorten.interest, saving: base.totalInterest - shorten.interest - fee },
+    reduce: { monthly: reduce.monthly, interest: reduce.totalInterest, saving: base.totalInterest - reduce.totalInterest - fee }
+  };
+}
+/* 예금(일시예치): 단리 또는 월복리 */
+function depositCalc({ P, rate, n, compound, taxRate }) {
+  const gross = rnd(compound ? P * (Math.pow(1 + rate / 1200, n) - 1) : P * rate / 100 * n / 12);
+  return finishInterest(gross, P, n, taxRate);
+}
+/* 적금(정액 적립식, 단리): 이자 = 월납입 × 연이율/12 × n(n+1)/2 */
+function savingsCalc({ M, rate, n, taxRate }) {
+  const gross = rnd(M * rate / 100 / 12 * n * (n + 1) / 2);
+  return finishInterest(gross, M * n, n, taxRate);
+}
+function finishInterest(gross, principal, n, taxRate) {
+  const tax = Math.floor(gross * taxRate), net = gross - tax;
+  return { principal, gross, tax, net, payout: principal + net, effectiveYield: principal > 0 && n > 0 ? net / principal / (n / 12) * 100 : 0 };
+}
+/* 목표 금액 달성까지 개월 수 (월복리, 매월 말 적립). 100년 안에 못 이루면 null */
+function goalMonths({ T, C, S, rate }) {
+  const r = rate / 100 / 12; let bal = C;
+  for (let k = 0; k <= 1200; k++) { if (bal >= T) return { months: k, balance: bal }; bal = bal * (1 + r) + S; }
+  return null;
+}
+function addMonths(d, k) {
+  const t = d.getMonth() + k, y = d.getFullYear() + Math.floor(t / 12), m = ((t % 12) + 12) % 12;
+  return new Date(y, m, Math.min(d.getDate(), new Date(y, m + 1, 0).getDate()));
+}
+// ==CALC-END==
+
+const CALCS = {
+  loan: { title: '대출 상환', fields: [
+    { k: 'P', l: '대출 원금(원)', d: '100,000,000', t: 'money' },
+    { k: 'rate', l: '연이율(%)', d: '4', t: 'dec' },
+    { k: 'n', l: '기간(개월)', d: '360', t: 'int' },
+    { k: 'method', l: '상환방식', d: 'annuity', t: 'sel', o: [['annuity', '원리금균등'], ['principal', '원금균등'], ['bullet', '만기일시']] },
+    { k: 'grace', l: '거치기간(개월, 이자만 내는 기간 · 만기일시는 해당 없음)', d: '0', t: 'int' }],
+    run(v) {
+      const P = num(v.P), n = Math.floor(num(v.n)), rate = num(v.rate);
+      if (!(P > 0) || !(n >= 1 && n <= 600) || rate < 0 || rate > 100) return bad();
+      const r = loanSchedule({ P, rate, n, method: v.method, grace: num(v.grace) });
+      const first = r.rows[0], lastRow = r.rows[r.rows.length - 1];
+      return `<div class="card">${kv('총이자', won(r.totalInterest) + '원')}${kv('총상환액', won(r.totalPaid) + '원')}
+        ${v.method === 'annuity' ? kv('월 상환액(원리금)', won(r.monthly) + '원') : ''}
+        ${v.method === 'principal' ? kv('첫 달 상환액', won(first.payment) + '원') + kv('마지막 달 상환액', won(lastRow.payment) + '원') : ''}
+        ${v.method === 'bullet' ? kv('매월 이자', won(first.interest) + '원') + kv('만기 상환액', won(lastRow.payment) + '원') : ''}</div>
+        <details><summary>월별 상환표 보기 (${r.rows.length}회차)</summary><div class="card scroll"><table class="t"><tr><th>회차</th><th>상환액</th><th>원금</th><th>이자</th><th>잔액</th></tr>
+        ${r.rows.map(x => `<tr><td>${x.i}</td><td class="num">${won(x.payment)}</td><td class="num">${won(x.principal)}</td><td class="num">${won(x.interest)}</td><td class="num">${won(x.balance)}</td></tr>`).join('')}</table></div></details>`;
+    } },
+  prepay: { title: '중도상환', fields: [
+    { k: 'B', l: '현재 대출 잔액(원)', d: '100,000,000', t: 'money' },
+    { k: 'rate', l: '연이율(%)', d: '4', t: 'dec' },
+    { k: 'm', l: '남은 기간(개월)', d: '240', t: 'int' },
+    { k: 'X', l: '중도상환액(원)', d: '20,000,000', t: 'money' },
+    { k: 'fee', l: '중도상환수수료율(%)', d: '1.2', t: 'dec' }],
+    note: '원리금균등 상환 중인 대출을 기준으로 계산합니다.',
+    run(v) {
+      const B = num(v.B), m = Math.floor(num(v.m)), rate = num(v.rate), X = num(v.X), fee = num(v.fee);
+      if (!(B > 0) || !(m >= 1 && m <= 600) || rate < 0 || rate > 100 || X < 0 || fee < 0 || fee > 100) return bad();
+      if (X > B) return '<div class="empty">중도상환액이 잔액보다 큽니다.</div>';
+      const r = prepayEffect({ B, rate, m, X, feePct: fee });
+      const col = (t, o) => `<div class="card"><h3>${t}</h3>${o}</div>`;
+      const sv = x => `<b class="${x >= 0 ? '' : 'muted'}" style="color:var(${x >= 0 ? '--good' : '--bad'})">${x >= 0 ? '' : '−'}${won(Math.abs(x))}원</b>`;
+      const better = r.shorten.saving >= r.reduce.saving ? '기간 단축' : '월상환액 감소';
+      return `<div class="card">${kv('현재 월 상환액', won(r.base.monthly) + '원')}${kv('남은 이자(상환 안 할 때)', won(r.base.interest) + '원')}${kv('중도상환수수료', won(r.fee) + '원')}${kv('상환 후 잔액', won(r.balanceAfter) + '원')}</div>
+        ${col('① 기간 단축 (월상환액 유지)', kv('남은 기간', r.shorten.months === Infinity ? '계산 불가' : `${r.shorten.months}개월 (${m - r.shorten.months}개월 단축)`) + kv('남은 이자', won(r.shorten.interest) + '원') + kv('이자 절감 − 수수료', sv(r.shorten.saving)))}
+        ${col('② 월상환액 감소 (기간 유지)', kv('새 월 상환액', won(r.reduce.monthly) + '원 (−' + won(r.base.monthly - r.reduce.monthly) + ')') + kv('남은 이자', won(r.reduce.interest) + '원') + kv('이자 절감 − 수수료', sv(r.reduce.saving)))}
+        <div class="sub" style="margin-top:8px">이자 절감이 더 큰 쪽: <b>${better}</b></div>`;
+    } },
+  deposit: { title: '예금·적금', fields: [
+    { k: 'kind', l: '종류', d: 'savings', t: 'sel', o: [['savings', '적금(매월 납입, 단리)'], ['deposit', '예금(일시 예치)']] },
+    { k: 'amt', l: '월 납입액 또는 예치 원금(원)', d: '500,000', t: 'money' },
+    { k: 'rate', l: '연이율(%)', d: '4', t: 'dec' },
+    { k: 'n', l: '기간(개월)', d: '12', t: 'int' },
+    { k: 'comp', l: '예금 이자 방식', d: 'simple', t: 'sel', o: [['simple', '단리'], ['monthly', '월복리']] },
+    { k: 'tax', l: '세금', d: '0.154', t: 'sel', o: [['0.154', '일반과세 15.4%'], ['0.095', '세금우대 9.5%'], ['0', '비과세 0%']] }],
+    run(v) {
+      const amt = num(v.amt), n = Math.floor(num(v.n)), rate = num(v.rate), taxRate = num(v.tax);
+      if (!(amt > 0) || !(n >= 1 && n <= 600) || rate < 0 || rate > 100) return bad();
+      const r = v.kind === 'savings' ? savingsCalc({ M: amt, rate, n, taxRate }) : depositCalc({ P: amt, rate, n, compound: v.comp === 'monthly', taxRate });
+      return `<div class="card">${kv(v.kind === 'savings' ? '총 납입원금' : '예치 원금', won(r.principal) + '원')}${kv('세전 이자', won(r.gross) + '원')}${kv('세금', won(r.tax) + '원')}${kv('세후 이자', won(r.net) + '원')}${kv('세후 수령액', `<b>${won(r.payout)}원</b>`)}${kv('실효 연수익률(세후, 원금 대비)', r.effectiveYield.toFixed(2) + '%')}</div>
+        ${v.kind === 'savings' ? '<div class="sub">적금은 매월 납입하므로 총 납입원금 기준 수익률이 표면 금리보다 낮게 나옵니다.</div>' : ''}`;
+    } },
+  goal: { title: '목표 달성', fields: [
+    { k: 'T', l: '목표 금액(원)', d: '100,000,000', t: 'money' },
+    { k: 'C', l: '현재 보유액(원)', d: '20,000,000', t: 'money' },
+    { k: 'S', l: '월 저축액(원)', d: '1,000,000', t: 'money' },
+    { k: 'rate', l: '예상 연수익률(%, 월복리)', d: '3', t: 'dec' }],
+    run(v) {
+      const T = num(v.T), C = num(v.C), Sv = num(v.S), rate = num(v.rate);
+      if (!(T > 0) || C < 0 || Sv < 0 || rate < 0 || rate > 100) return bad();
+      const g = goalMonths({ T, C, S: Sv, rate });
+      if (!g) return '<div class="empty">100년 안에 달성하기 어려워요. 월 저축액이나 수익률을 높여 보세요.</div>';
+      const d = addMonths(new Date(), g.months), y = Math.floor(g.months / 12), m = g.months % 12;
+      return `<div class="card">${kv('달성까지', `<b>${g.months}개월</b>${g.months >= 12 ? ` (${y}년 ${m}개월)` : ''}`)}${kv('예상 달성일', fmtDate(d).slice(0, 7).replace('-', '년 ') + '월')}${kv('그때의 예상 잔액', won(g.balance) + '원')}${kv('총 저축 원금', won(C + Sv * g.months) + '원')}${kv('투자 수익', won(g.balance - C - Sv * g.months) + '원')}</div>`;
+    } }
+};
+const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+const bad = () => '<div class="empty">입력값을 확인하세요.</div>';
+function calcValues(id) { const o = {}; CALCS[id].fields.forEach(f => { o[f.k] = (S.calc[id] && S.calc[id][f.k] != null) ? S.calc[id][f.k] : f.d; }); return o; }
+function calcOut() { const id = ui.calcTab; return CALCS[id].run(calcValues(id)); }
+function viewCalc() {
+  const id = ui.calcTab, c = CALCS[id], v = calcValues(id);
+  return `<div class="seg">${Object.entries(CALCS).map(([k, x]) => `<button data-act="calc-tab" data-id="${k}" class="${k === id ? 'on' : ''}">${x.title}</button>`).join('')}</div>
+    <div class="card" id="calc-form" style="margin-top:4px">${c.note ? `<div class="sub">${c.note}</div>` : ''}
+      ${c.fields.map(f => `<label class="f">${f.l}${f.t === 'sel'
+        ? `<select data-k="${f.k}">${f.o.map(([val, lab]) => `<option value="${val}"${String(v[f.k]) === val ? ' selected' : ''}>${lab}</option>`).join('')}</select>`
+        : `<input data-k="${f.k}" inputmode="${f.t === 'dec' ? 'decimal' : 'numeric'}" value="${esc(v[f.k])}">`}</label>`).join('')}
+      <div style="text-align:right;margin-top:8px"><button class="btn sm" data-act="calc-reset">기본값으로</button></div></div>
+    <h2>결과</h2><div id="calc-out">${calcOut()}</div>
+    <div class="disc">참고용 계산이며 실제 금융사 조건과 다를 수 있음</div>`;
+}
 
 /* ============================================================
    설정 + 백업
@@ -438,6 +594,15 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => { if (typeof onInputExtra === 'function') onInputExtra(e); });
 
+function onInputExtra(e) {
+  const t = e.target;
+  if (t.closest && t.closest('#calc-form') && t.dataset.k) {
+    const id = ui.calcTab; (S.calc[id] = S.calc[id] || {})[t.dataset.k] = t.value; save();
+    $('#calc-out').innerHTML = calcOut();
+  }
+}
+actions['calc-tab'] = el => { ui.calcTab = el.dataset.id; render(); };
+actions['calc-reset'] = () => { delete S.calc[ui.calcTab]; save(); render(); };
 //@@EXTRA@@
 render();
 </script>
