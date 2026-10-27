@@ -5,6 +5,7 @@
 - 실행: https://cleandwh.github.io/cardfolio/
 - 코드: `index.html` 한 파일 (CSS·JS·규칙 DB 포함)
 - 운영 문서: `HANDOFF.md` — 카드 규칙, 설계 원칙, AI에게 카드 추가 시킬 때 요청 가이드
+- 확장 계획: `LIFE_ASSISTANT_PLAN.md` — 노트20 울트라 + LTE 라우터로 만드는 라이프 비서 작업 계획(카드폴리오를 돈 모듈로 연결)
 
 ## 수정 방법
 1. `index.html` 열기 → 연필(Edit) → 전체 내용을 새 코드로 교체 → Commit changes
