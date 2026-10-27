@@ -180,6 +180,7 @@ mark.cf-highlight{background:var(--hl-color);color:#171717;padding:0;border-radi
   <section id="tab-month" hidden>
     <h2 id="monthTitle">이번 달 체크</h2>
     <div class="kpi" id="kpi"></div>
+    <div class="card" id="biseoPerf" hidden style="margin-top:10px;font-size:13px"></div><!-- v9: 비서 서버 실적(BISEO_URL 있을 때만) -->
     <h2>이번 달 작전 — 어디에 얼마만 쓰면 되나</h2>
     <p class="muted">규칙에서 자동으로 나오는 월 목표. 이 숫자만 넘기면 혜택은 다 받음.</p>
     <div class="tablewrap"><table id="planTable"></table></div>
@@ -198,6 +199,16 @@ mark.cf-highlight{background:var(--hl-color);color:#171717;padding:0;border-radi
     <input id="cardq" type="search" placeholder="카드 규칙 안에서 찾기: 상품권, 관리비, 주차…" autocomplete="off" style="margin-bottom:10px">
     <div id="cards"></div>
     <div class="note">실적·한도는 카드사 공시 기준으로 정리한 1차본. "확인" 표시는 공식 약관으로 다시 봐야 하는 항목.</div>
+    <!-- v9: 비서 서버(노트20) 연동 설정. 비워 두면 기존과 100% 동일하게 이 폰에만 저장 -->
+    <div class="card" id="biseoBox" style="margin-top:12px;font-size:13px">
+      <b>비서 서버(노트20) 연동</b> <span class="muted">— 비워 두면 예전처럼 이 폰에만 저장돼요. 노트20의 <code>/cardfolio/</code> 주소로 열면 자동 연결.</span>
+      <div class="row" style="margin-top:8px">
+        <input id="biseoUrl" type="url" placeholder="http://100.x.x.x:8787" autocomplete="off" style="flex:1;min-width:160px;padding:8px 10px;font-size:14px">
+        <button type="button" id="biseoSave" style="font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:7px 10px">저장</button>
+        <button type="button" id="biseoTest" style="font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:7px 10px">연결 확인</button>
+      </div>
+      <div class="muted" id="biseoStatus" role="status" aria-live="polite" style="margin-top:6px"></div>
+    </div>
   </section>
 </div>
 
@@ -3346,7 +3357,7 @@ const EVENTS = [
 ];
 function activeEvents(){ const t=new Date(); t.setHours(0,0,0,0); return EVENTS.filter(e => new Date(e.start+'T00:00:00+09:00')<=t && new Date(e.end+'T23:59:59+09:00')>=t); }
 function evState(){ try{ return JSON.parse(localStorage.getItem('cf_ev')||'{}'); }catch(e){ return {}; } }
-function evSave(o){ try{ localStorage.setItem('cf_ev', JSON.stringify(o)); }catch(e){} }
+function evSave(o){ try{ localStorage.setItem('cf_ev', JSON.stringify(o)); }catch(e){} biseoPost({kind:'events', data:o, events_meta:biseoEventsMeta()}); } // v9: 비서 서버에도
 
 // ───────── 유틸 ─────────
 const won = n => n.toLocaleString('ko-KR') + '원';
@@ -3628,7 +3639,7 @@ function renderPlan(){
 }
 function monthKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 function loadChecks(){ try{ return JSON.parse(localStorage.getItem('cf_'+monthKey())||'{}'); }catch(e){ return {}; } }
-function saveChecks(o){ try{ localStorage.setItem('cf_'+monthKey(), JSON.stringify(o)); }catch(e){} }
+function saveChecks(o){ try{ localStorage.setItem('cf_'+monthKey(), JSON.stringify(o)); }catch(e){} biseoPost({month:monthKey(), checks:o}); } // v9: 비서 서버에도
 function renderMonth(){
   const d=new Date(); const last=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
   $('#monthTitle').textContent = `${d.getMonth()+1}월 체크 · 월말까지 ${last-d.getDate()}일`;
@@ -3673,6 +3684,72 @@ document.querySelector('.tabs').addEventListener('click', e=>{
 $('#today').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) + ' · 주력 7장 + 더모아 2장';
 $('#q').value = '스타벅스 1.2만'; answer();
 perfTable(); rewardTable(); tierTable(); renderMonth(); renderPlan(); renderEvents(); renderCards();
+
+// ───────── v9 비서 서버(노트20) 연동 — BISEO_URL 이 비어 있으면 아래 전부 아무 동작 안 함 ─────────
+// 주소 우선순위: localStorage 'cf_biseo_url' → 노트20이 /cardfolio/ 로 직접 서빙 중이면 같은 origin(자동) → ''(연동 끔)
+// GitHub Pages(https)에서 노트20(http)으로는 브라우저가 fetch 를 막으므로(mixed content) 노트20 주소로 열거나 tailscale cert 로 https 를 쓸 것. HANDOFF 4-3 참고.
+function biseoUrl(){
+  let u=''; try{ u=localStorage.getItem('cf_biseo_url')||''; }catch(e){}
+  if(!u && /^https?:$/.test(location.protocol) && !/github\.io$/i.test(location.hostname) && location.pathname.startsWith('/cardfolio/')) u=location.origin;
+  return u.replace(/\/+$/,'');
+}
+const BISEO_URL = biseoUrl();
+function biseoPost(body){ // 체크 저장 직후 호출. 실패는 조용히 무시(로컬 저장이 원본)
+  if(!BISEO_URL) return;
+  try{ fetch(BISEO_URL+'/api/cardfolio/checks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive:true}).catch(()=>{}); }catch(e){}
+}
+function biseoEventsMeta(){ const m={}; for(const e of EVENTS) m[e.id]={title:e.title,end:e.end,card:e.card,apply:!!e.apply}; return m; } // 서버는 EVENTS 를 모르니 메타를 같이 보냄(브리핑 D-7용)
+function biseoApplyChecks(st){ // renderMonth 를 다시 부르면 change 리스너가 중복되므로 DOM 만 갱신
+  document.querySelectorAll('#checks input[type=checkbox]').forEach(i=>{ const id=i.id.replace('chk_',''); if(id in st){ i.checked=!!st[id]; i.closest('.check').classList.toggle('done', !!st[id]); } });
+}
+function biseoApplyEvents(st){
+  document.querySelectorAll('#events input[type=checkbox]').forEach(i=>{ const id=i.id.replace('ev_',''); if(id in st){ i.checked=!!st[id]; i.closest('.check').classList.toggle('done', !!st[id]); } });
+}
+async function biseoSync(){ // 페이지 로드 시: 서버 체크 ∪ 로컬 체크 (같은 키는 서버 값 우선 — 다른 폰에서 바꾼 최신 상태)
+  if(!BISEO_URL) return;
+  try{
+    const r = await fetch(BISEO_URL+'/api/cardfolio/checks?month='+monthKey()); if(!r.ok) return;
+    const j = await r.json();
+    const chk = Object.assign({}, loadChecks(), j.checks||{}), ev = Object.assign({}, evState(), j.events||{});
+    try{ localStorage.setItem('cf_'+monthKey(), JSON.stringify(chk)); localStorage.setItem('cf_ev', JSON.stringify(ev)); }catch(e){}
+    biseoApplyChecks(chk); biseoApplyEvents(ev); answer();
+    biseoPost({month:monthKey(), checks:chk, events:ev, events_meta:biseoEventsMeta()}); // 로컬에만 있던 키를 서버에도 올림
+  }catch(e){}
+}
+async function biseoPerf(){ // 이번 달 탭 상단: 서버가 문자·캡처로 누적한 실적 인정액/목표 한 줄
+  const box=$('#biseoPerf'); if(!BISEO_URL||!box) return;
+  try{
+    const r = await fetch(BISEO_URL+'/api/cardfolio/performance?month='+monthKey()); if(!r.ok) return;
+    const j = await r.json();
+    const rows = (j.cards||[]).filter(c=>!c.aggregate && (c.target || c.counted));
+    if(!rows.length) return;
+    const man = n => Math.abs(n)>=10000 ? (n%10000? (n/10000).toFixed(1).replace(/\.0$/,'') : n/10000)+'만' : n.toLocaleString('ko-KR')+'원';
+    box.innerHTML = '<b>서버 실적</b> <span class="muted">(결제 문자·캡처로 누적한 인정액/목표)</span><br>' + rows.map(c=> c.target
+      ? `${c.name} <b class="${c.status==='충족'?'ok':''}">${man(c.counted)}</b>/${man(c.target)}${c.status==='충족'?' ✓':''}`
+      : `${c.name} ${man(c.counted)} <span class="muted">(무실적)</span>`).join(' · ')
+      + (j.updated_at? ` <span class="muted">· ${String(j.updated_at).slice(5,16).replace('T',' ')}</span>`:'');
+    box.hidden=false;
+  }catch(e){}
+}
+function biseoSettings(){ // 카드 탭 하단 "비서 서버 주소" 입력칸
+  const inp=$('#biseoUrl'), st=$('#biseoStatus'); if(!inp) return;
+  let saved=''; try{ saved=localStorage.getItem('cf_biseo_url')||''; }catch(e){}
+  inp.value = saved; if(!saved && BISEO_URL) inp.placeholder = BISEO_URL+' (자동 감지)';
+  $('#biseoSave').addEventListener('click', ()=>{
+    const v=inp.value.trim().replace(/\/+$/,'');
+    try{ if(v) localStorage.setItem('cf_biseo_url', v); else localStorage.removeItem('cf_biseo_url'); }catch(e){}
+    st.textContent = v ? '저장했어요. 새로고침하면 연동이 켜져요.' : '지웠어요. 새로고침하면 연동이 꺼져요.';
+  });
+  $('#biseoTest').addEventListener('click', async ()=>{
+    const v=(inp.value.trim()||BISEO_URL).replace(/\/+$/,''); if(!v){ st.textContent='주소를 먼저 적어 주세요. 예: http://100.x.x.x:8787'; return; }
+    st.textContent='확인 중…';
+    try{ const r=await fetch(v+'/api/core/status'); const j=await r.json();
+      st.textContent = j.ok ? `연결됨 · 모듈 ${Object.keys(j.modules||{}).length}개 · cardfolio: ${(j.modules&&j.modules.cardfolio)||'없음'}` : '응답은 왔지만 ok 가 아니에요.'; }
+    catch(e){ st.textContent = '연결 실패. ' + (location.protocol==='https:' && /^http:/.test(v) ? 'https 페이지에서 http 서버로는 브라우저가 막아요(mixed content). 노트20의 /cardfolio/ 주소로 이 페이지를 열어 주세요.' : 'Tailscale 연결과 주소(포트 8787)를 확인해 주세요.'); }
+  });
+}
+function biseoInit(){ biseoSettings(); if(!BISEO_URL) return; biseoSync(); biseoPerf(); }
+biseoInit(); // v9: 비서 서버 연동 시작(BISEO_URL 없으면 설정칸만 붙임). const BISEO_URL 선언 뒤에 있어야 함
 
 // ───────── 개인 형광펜: 카드 규칙·계산과 독립 ─────────
 (() => {

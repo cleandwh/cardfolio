@@ -102,3 +102,36 @@
 > 카드 추가: [카드사] [카드명] / 용도 / 실적 구간별 혜택·한도 / 혜택별 brands·rate·min·cap·횟수 / perfExclude / rewardExclude / 상품권(voucher)과 선불충전(prepaid) 구분 / links / 기존 카드와 겹치는 영역의 우선순위를 PLAN·CHECKS에 반영
 
 검수 3종: 조회창에 ① 그 카드 대표 가맹점 ② 상품권 ③ 관리비 → 혜택/실적 두 칸이 맞는지
+
+## 4-3. v9 비서 서버 연동 (노트20 개인비서 `AI-biseo_261027`의 `cardfolio` 모듈)
+목적: 폰을 바꿔도 "이번 달 체크"·"이벤트 응모 체크"가 남고, 결제 문자·카드사 앱 캡처로 누적한 **실적 인정액**을 이 페이지에서도 본다. 규칙(`CARDS`)·혜택 계산은 그대로 페이지가 담당하고, 서버는 **실적 축**(인정액/목표)과 체크 저장만 맡는다 — 혜택/실적 두 축 분리 원칙 유지.
+
+### 설정 (사용자)
+1. **권장: 노트20이 이 페이지를 직접 서빙** — 비서 `config.json`에 `"cardfolio": {"html_path": "/sdcard/cardfolio/index.html"}` (파일 또는 폴더). 서버가 `http://<노트20 Tailscale IP>:8787/cardfolio/` 로 같은 `index.html`을 서빙하고, 그 주소로 열면 **같은 origin 이라 설정 없이 자동 연결**된다(`BISEO_URL = location.origin`). GitHub Pages 주소와 localStorage 가 분리되므로(origin 이 다름) 처음 한 번은 서버에서 체크를 내려받는다.
+2. 대안: GitHub Pages(https)에서 쓰려면 **카드 탭 맨 아래 "비서 서버(노트20) 연동"** 칸에 주소 입력 → 저장(`localStorage['cf_biseo_url']`) → "연결 확인"(GET `/api/core/status`). 단 **https 페이지 → http 서버 fetch 는 브라우저가 막는다(mixed content)**. 이 경우 노트20에서 `tailscale cert <노트20>.<tailnet>.ts.net` 으로 인증서를 받아 https 로 서빙하거나(비서 코어에 TLS 옵션 필요, 현재 미구현), 1번 방식을 쓸 것.
+3. 비워 두면 **기존과 100% 동일**(이 폰 localStorage 에만 저장, 네트워크 호출 없음).
+
+### 페이지 변경 (index.html, 약 +80줄)
+- HTML: 이번 달 탭 `#kpi` 아래 `#biseoPerf`(서버 실적 한 줄, 응답 있을 때만 표시) / 카드 탭 하단 `#biseoBox`(주소 입력 `#biseoUrl`, 저장 `#biseoSave`, 연결 확인 `#biseoTest`, 상태 `#biseoStatus`).
+- JS(`// v9 비서 서버 연동` 블록, 형광펜 블록 바로 앞): `biseoUrl()`→`BISEO_URL`, `biseoPost()`, `biseoSync()`, `biseoPerf()`, `biseoSettings()`, `biseoInit()`. `saveChecks()`/`evSave()` 끝에 `biseoPost(...)` 한 줄씩 추가(실패는 `.catch(()=>{})` 로 조용히 무시, `keepalive:true`).
+- 로드 시 `biseoSync()`: GET 체크 → **서버 ∪ 로컬** 병합(같은 키는 서버 값 우선 — 다른 폰에서 바꾼 최신 상태) → localStorage 갱신 → 체크박스 DOM 갱신(`renderMonth` 재호출 시 change 리스너가 중복되므로 DOM 만 갱신) → 병합 결과를 다시 POST(로컬에만 있던 키를 서버에도).
+- `evSave()`는 `events_meta`(EVENTS 의 id→{title,end,card,apply})를 함께 보낸다. 서버는 `EVENTS` 배열을 모르므로 이것으로 브리핑에 "이벤트 ○○ 마감 D-7 응모 필요"를 낸다.
+
+### 키·엔드포인트
+| 구분 | 값 |
+|---|---|
+| localStorage | `cf_YYYY-MM`(체크, 기존), `cf_ev`(이벤트 체크, 기존), **`cf_biseo_url`**(신규, 서버 주소) |
+| POST `/api/cardfolio/checks` | `{month:"2026-10", checks:{...}}` 또는 `{kind:"events", data:{...}, events_meta:{...}}` → `{ok, month, data:{checks|events|events_meta}}` (서버 ∪ 클라이언트, 클라이언트 우선 병합 후 저장) |
+| GET `/api/cardfolio/checks?month=` | `{month, checks:{}, events:{}, events_meta:{}}` (events 는 월 무관) |
+| GET `/api/cardfolio/performance?month=` | `{month, cards:[{key,name,kind,target,counted,excluded,remaining,status:"충족|부족|무실적",tier_reached,next_tier,uncertain,aggregate,expires}], updated_at}` |
+| POST `/api/cardfolio/perf` | `{month, card:"sktw"|"SKT우리", amount:50000|"5만", merchant?, note?}` 수동 누적 |
+| GET `/api/cardfolio/payments?month=` | 이번 달 기록 목록 / GET `/api/cardfolio/rules` 서버 카드 규칙(JSON) |
+| GET `/cardfolio/` | `config.cardfolio.html_path` 가 있을 때 이 페이지 정적 서빙 |
+
+서버 카드 키는 이 페이지 `CARDS[].id` 와 같다(`mgs, more1, more2, rpm, naeun, tok, nara, sktw`). 문자에 "신한카드"만 찍히면 은행/금투 더모아를 구분할 수 없어 서버는 `shinhan_themore`(합산) 키로 누적한다(주유 가맹점이면 `rpm`). 서버 규칙은 **3장 표 8장만** 반영 — 그 뒤 추가된 카드(유니마일·우리V·롯데 등)는 서버가 모르니 실적 누적 대상이 아니다(필요하면 `biseo/modules/cardfolio/rules.py` 에 추가).
+
+### 봇
+- **카드** 버튼: 카드별 목표/인정액/부족분(부족 큰 순) + 하위 버튼 `실적 입력 / 결제 내역 / 카드폴리오 열기 / ← 처음으로`
+- 결제 문자 붙여넣기 → (sms 모듈) → 자동 누적. 관리비·세금·상품권 등은 카드별 `perfExclude` 기준으로 "실적 제외" 표시. 취소(음수) 차감.
+- 카드사 앱 캡처 사진 → tesseract OCR(기기에 `pkg install tesseract` + kor 데이터 필요) → "읽은 내역 N건 … 어느 카드인가요?" 선택 후 저장. 캡션 없는 사진은 "카드 내역 캡처인가요?" 먼저 묻는다.
+- 아침 브리핑 `💳 카드`: 부족 카드 최대 4개 / 더모아 만료 D-60 이내 / 응모 안 한 이벤트 D-7 이내. 매월 25일 09:00 실적 점검, 더모아 D-30·D-7 알림 1회.
