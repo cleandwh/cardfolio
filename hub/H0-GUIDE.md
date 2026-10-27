@@ -86,6 +86,41 @@ http://(2번에서 메모한 노트20 Tailscale IP):8080
 
 끝나면 Termux에서 `Ctrl + C`(키보드 위 CTRL 버튼 + c)로 종료.
 
+## 7. S25 사진 자동 백업 시험 (Syncthing)
+
+> 목표: S25에서 찍은 사진이 노트20 SD로 복사되고, **S25에서 지워도 노트20 사본은 남는지** 확인.
+
+노트20 Termux에서:
+```sh
+pkg install -y syncthing
+df -h /storage/ABCD-1234                 # SD 남은 용량 확인 → 알려 주세요
+mkdir -p ~/storage/external-1/S25-backup # SD 안의 Termux 전용 폴더
+syncthing --gui-address=0.0.0.0:8384
+```
+(`~/storage/external-1`이 없다는 오류가 나오면 그대로 캡처)
+
+S25:
+1. F-Droid(또는 Play 스토어)에서 **Syncthing-Fork** 설치 → 실행, 권한 허용.
+2. S25 크롬에서 `http://(노트20 Tailscale IP):8384` 접속 → 노트20 Syncthing 관리 화면.
+3. 두 기기를 서로 추가(기기 ID 교환) → S25의 `DCIM/Camera` 폴더 공유:
+   - S25 쪽: **보내기 전용(Send Only)**, Wi-Fi에서만 동기화
+   - 노트20 쪽: 저장 경로 `~/storage/external-1/S25-backup/Camera`, **받기 전용(Receive Only)**
+   - 노트20 폴더 → 고급(Advanced) → **Ignore Delete 켜기**
+4. **시험**: S25로 사진 2장 촬영 → 노트20에 생겼는지 확인 → S25에서 1장 삭제 → **노트20에 2장 그대로 있는지** 확인.
+
+이 단계가 어려우면 노트20/S25 화면 캡처만 보내 주세요. 다음 단계에서 화면 순서대로 다시 정리해 드립니다.
+
+## 8. (선택) 노트20 원격 조작 — 게임용 RustDesk
+
+1. 두 폰에 **RustDesk** 설치 (Play 스토어 또는 GitHub).
+2. 노트20: RustDesk 실행 → 화면 공유·입력 제어(접근성) 권한 허용 → 설정에서 **직접 IP 접속 허용**.
+3. S25: 와이파이 끄고 RustDesk에서 `노트20 Tailscale IP`로 접속 → 노트20 화면이 보이고 터치가 되는지, **반응 지연 체감**을 알려 주세요.
+
+## 9. (선택) 공용 와이파이 보호 — Tailscale 출구 노드
+
+1. 노트20 Tailscale 앱 → **Run as exit node(출구 노드로 사용)** 켜기.
+2. S25 Tailscale 앱 → Exit node → 노트20 선택 → S25 인터넷이 집을 거쳐 나감. (평소에는 꺼 두기)
+
 ---
 
 ## 알려 주실 것 (체크리스트)
@@ -95,3 +130,5 @@ http://(2번에서 메모한 노트20 Tailscale IP):8080
 - [ ] `llama-bench` 결과 2개 (캡처)
 - [ ] S25 모바일 데이터로 접속 됨/안 됨, 첫 답변까지 시간, 한국어 품질
 - [ ] 발열 정도
+- [ ] SD 남은 용량, Syncthing 백업 됨/안 됨, **S25 삭제 후 노트20 사본 유지 여부**
+- [ ] (선택) RustDesk 접속·지연 체감

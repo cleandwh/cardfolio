@@ -3,7 +3,7 @@
 재무 대시보드(`finance/`), 개인 기록(`life/`), 사진, 질문·답변을 **노트20 울트라 한 대**에 모으고,
 S25는 **크롬으로 접속만** 하는 구조. 과금 0원, 데이터는 내 폰 밖(외부 서비스)으로 나가지 않음.
 
-> 이 문서가 `finance/DESIGN.md`·`life/DESIGN.md`보다 우선한다. 특히 `life/DESIGN.md` 3장(LLM 연결)은 이 문서 6장으로 대체.
+> 실행 순서·일정은 `hub/PLAN.md`. 이 문서가 `finance/DESIGN.md`·`life/DESIGN.md`보다 우선한다. 특히 `life/DESIGN.md` 3장(LLM 연결)은 이 문서 6장으로 대체.
 
 ---
 
