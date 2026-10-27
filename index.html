@@ -3682,7 +3682,8 @@ document.querySelector('.tabs').addEventListener('click', e=>{
 
 // init
 $('#today').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) + ' · 주력 7장 + 더모아 2장';
-$('#q').value = '스타벅스 1.2만'; answer();
+// v9.2: ?q=스타벅스 1.2만 딥링크(비서 봇 '조회' 명령) — 있으면 그 검색어로 바로 조회, 없으면 기존 예시
+$('#q').value = (new URLSearchParams(location.search).get('q') || '').trim() || '스타벅스 1.2만'; answer();
 perfTable(); rewardTable(); tierTable(); renderMonth(); renderPlan(); renderEvents(); renderCards();
 
 // ───────── v9 비서 서버(노트20) 연동 — BISEO_URL 이 비어 있으면 아래 전부 아무 동작 안 함 ─────────

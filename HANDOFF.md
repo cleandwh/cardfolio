@@ -128,6 +128,8 @@
 | GET `/api/cardfolio/payments?month=` | 이번 달 기록 목록 / GET `/api/cardfolio/rules` 서버 카드 규칙(JSON) |
 | GET `/cardfolio/` | `config.cardfolio.html_path` 가 있을 때 이 페이지 정적 서빙 |
 
+v9.2(2026-10-27): **조회 딥링크** — `index.html?q=스타벅스%201.2만` 으로 열면 조회 입력칸에 넣고 바로 조회한다(초기화 줄 1곳). 비서 봇 `조회 스타벅스 1.2만` 명령이 이 링크(html_path 있으면 노트20 `/cardfolio/?q=…`, 없으면 GitHub Pages)를 보낸다.
+
 v9.1(2026-10-27): 서버 `rules.py` 와 대조해 `perfExclude` 보강 — 나사카 `government`, SKT우리·구RPM `fees`,`loans`(3장 표 기준). 서버는 `scripts/sync_cats.py` 로 이 페이지의 `CATS`·`CARDS[].perfExclude`·`CHECKS` 를 그대로 가져가므로, 사전·제외 목록을 고치면 노트20에서 그 스크립트를 다시 돌린다(설치가이드 12단계).
 
 서버 카드 키는 이 페이지 `CARDS[].id` 와 같다(`mgs, more1, more2, rpm, naeun, tok, nara, sktw`). 문자에 "신한카드"만 찍히면 은행/금투 더모아를 구분할 수 없어 서버는 `shinhan_themore`(합산) 키로 누적한다(주유 가맹점이면 `rpm`). 서버 규칙은 **3장 표 8장만** 반영 — 그 뒤 추가된 카드(유니마일·우리V·롯데 등)는 서버가 모르니 실적 누적 대상이 아니다(필요하면 `biseo/modules/cardfolio/rules.py` 에 추가).
