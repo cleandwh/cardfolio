@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<!-- 개인 데이터가 밖으로 나가지 않도록 브라우저 차원에서 외부 연결 차단 (같은 출처만 허용) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#2e6b5a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>라이프 기록</title>
+<style>
+/* 레이아웃: 모바일 1열(360px 기준) → 상단 제목 → 탭 화면 → 하단 탭 */
+:root{
+  --bg:#f5f6f4; --panel:#ffffff; --fg:#1d2321; --muted:#68726e; --line:#dfe3e0;
+  --accent:#2e6b5a; --accent-soft:#e1f0eb; --on-accent:#ffffff;
+  --good:#237a4b; --good-soft:#e3f3e9; --warn:#a2650c; --warn-soft:#fbefd9; --bad:#b3362e; --bad-soft:#fae4e2;
+  --body:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141817; --panel:#1d2321; --fg:#ebefed; --muted:#98a39f; --line:#2c3431;
+  --accent:#6fc4ad; --accent-soft:#1e3530; --on-accent:#0f1a17;
+  --good:#6fcb93; --good-soft:#1c3327; --warn:#e3b35e; --warn-soft:#3a2d16; --bad:#ef8a82; --bad-soft:#3d2321; color-scheme:dark }}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;margin:0;-webkit-text-size-adjust:100%}
+.wrap{max-width:680px;margin:0 auto;padding:16px 16px calc(84px + env(safe-area-inset-bottom,0px))}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h2{font-size:17px;margin:22px 0 8px}
+h3{font-size:15px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:13px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+label.f{display:block;font-size:13px;color:var(--muted);margin:10px 0 0}
+label.f>input,label.f>select,label.f>textarea{margin-top:4px;color:var(--fg)}
+label.chk{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:15px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px}
+.card.hl{border-color:var(--warn);background:var(--warn-soft)}
+.card.tap{cursor:pointer}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.big{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.btn{white-space:nowrap;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px}
+.btn:hover,.btn:focus-visible{border-color:var(--accent);outline:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.block{display:block;width:100%;margin-top:10px;text-align:center}
+.badge{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;background:var(--accent-soft);color:var(--accent);font-weight:600;white-space:nowrap}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.good{background:var(--good-soft);color:var(--good)}
+.empty{text-align:center;color:var(--muted);padding:28px 8px}
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:6px}
+.seg button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv b{font-variant-numeric:tabular-nums}
+.disc{font-size:12px;color:var(--muted);margin-top:14px}
+.li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.li:last-child{border-bottom:0}
+.li .l{min-width:0}
+.li .l b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.li .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dayh{font-size:12px;color:var(--muted);margin:14px 0 0;font-weight:600}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.bar{height:8px;background:var(--line);border-radius:4px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.thumb{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:6px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.fab{position:fixed;right:max(16px,calc(50% - 324px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);font-size:30px;line-height:1;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;z-index:4}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav.tabs button{flex:1;border:0;background:none;padding:8px 0 6px;font-size:11px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button.on{color:var(--accent);font-weight:600}
+nav.tabs .dot{position:absolute;top:4px;left:calc(50% + 8px);background:var(--bad);color:#fff;border-radius:999px;font-size:10px;padding:0 5px;line-height:15px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.overlay.top{z-index:25;align-items:center}
+.sheet{background:var(--bg);width:100%;max-width:680px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet.mid{border-radius:16px;margin:16px;width:calc(100% - 32px);max-height:80vh}
+.sheet h3{font-size:17px;margin-bottom:4px}
+#toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:90vw;text-align:center}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.banner .row{margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><h1 id="title">라이프 기록</h1><span class="sub" id="topsub"></span></header>
+  <div id="banner"></div>
+  <main id="view"></main>
+</div>
+<button class="fab" id="fab" data-act="fab" aria-label="추가" hidden>+</button>
+<nav class="tabs" id="tabs"></nav>
+<div id="toast" hidden></div>
+
+<script src="core.js"></script>
+<script>
+'use strict';
+/* ============================================================
+   라이프 기록 — 서버·API 없음. 모든 기록은 이 브라우저의 IndexedDB('life')에만 저장.
+   외부로 개인 데이터를 보내는 코드는 없음 (CSP로 외부 연결도 차단).
+   계산·검색·알림 로직은 core.js(LifeCore)에 있고, 이 파일은 화면과 저장만 맡는다.
+   ============================================================ */
+const C = LifeCore;
+const { won, num, fmtDate, dayDiff } = C;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const todayStr = () => fmtDate(new Date());
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const actions = {};
+
+/* ---------- 저장소 (IndexedDB + 메모리 사본) ---------- */
+const STORES = ['people', 'events', 'items', 'cards', 'memos'];
+const D = { people: [], events: [], items: [], cards: [], memos: [] }; // 화면은 이 메모리 사본을 읽는다
+let META = {}; // { createdAt, lastBackup, snoozeUntil }
+let idb = null, storageProblem = '', saveFailed = false;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('IndexedDB 없음'));
+    const rq = indexedDB.open('life', 1);
+    rq.onupgradeneeded = () => {
+      const db = rq.result;
+      STORES.forEach(s => db.createObjectStore(s, { keyPath: 'id' }));
+      db.createObjectStore('meta', { keyPath: 'k' });
+    };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+    rq.onblocked = () => rej(new Error('다른 탭이 사용 중'));
+  });
+}
+const reqP = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const txDone = t => new Promise((res, rej) => { t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); });
+
+async function loadAll() {
+  try { idb = await openDB(); }
+  catch (e) { storageProblem = '이 브라우저에서는 저장소를 쓸 수 없어요. 입력한 내용이 유지되지 않습니다. (사생활 보호 모드/저장소 차단 확인)'; return; }
+  try {
+    for (const s of STORES) D[s] = await reqP(idb.transaction(s).objectStore(s).getAll());
+    const m = await reqP(idb.transaction('meta').objectStore('meta').getAll());
+    META = {}; m.forEach(x => META[x.k] = x.v);
+  } catch (e) { storageProblem = '저장된 데이터를 읽는 중 문제가 생겼어요. 새로고침 후에도 같으면 백업 파일로 복원하세요.'; }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); // 브라우저가 임의로 지우지 않도록 요청
+}
+async function setMeta(k, v) {
+  META[k] = v;
+  if (!idb) return;
+  try { const t = idb.transaction('meta', 'readwrite'); t.objectStore('meta').put({ k, v }); await txDone(t); } catch (e) { /* 무시 */ }
+}
+async function put(store, rec) {
+  const a = D[store], i = a.findIndex(x => x.id === rec.id);
+  if (i >= 0) a[i] = rec; else a.push(rec);
+  if (!META.createdAt) setMeta('createdAt', todayStr());
+  if (!idb) return true;
+  try { const t = idb.transaction(store, 'readwrite'); t.objectStore(store).put(rec); await txDone(t); saveFailed = false; return true; }
+  catch (e) { saveFailed = true; toast('저장에 실패했어요. 설정에서 백업을 내려받아 두세요.'); return false; }
+}
+async function del(store, id) {
+  D[store] = D[store].filter(x => x.id !== id);
+  if (!idb) return true;
+  try { const t = idb.transaction(store, 'readwrite'); t.objectStore(store).delete(id); await txDone(t); return true; }
+  catch (e) { toast('삭제에 실패했어요.'); return false; }
+}
+// 전체 교체(백업 가져오기·전체 삭제). 하나의 트랜잭션이라 중간에 실패하면 원래대로 남는다.
+async function replaceAll(data) {
+  if (idb) {
+    const t = idb.transaction(STORES, 'readwrite');
+    STORES.forEach(s => { const os = t.objectStore(s); os.clear(); (data[s] || []).forEach(r => os.put(r)); });
+    await txDone(t);
+  }
+  STORES.forEach(s => D[s] = data[s] || []);
+}
+
+/* ---------- 공통 UI ---------- */
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2600); }
+
+let sheetEl = null;
+function openSheet(html) {
+  if (!sheetEl) {
+    sheetEl = document.createElement('div'); sheetEl.className = 'overlay';
+    sheetEl.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"></div>';
+    sheetEl.addEventListener('mousedown', e => { if (e.target === sheetEl) closeSheet(); });
+    document.body.appendChild(sheetEl);
+    history.pushState({ sheet: 1 }, ''); // 안드로이드 뒤로가기로 시트 닫기
+  }
+  $('.sheet', sheetEl).innerHTML = html;
+  $('.sheet', sheetEl).scrollTop = 0;
+  return $('.sheet', sheetEl);
+}
+function closeSheet(fromPop) {
+  if (!sheetEl) return;
+  sheetEl.remove(); sheetEl = null;
+  if (!fromPop && history.state && history.state.sheet) history.back();
+}
+window.addEventListener('popstate', () => closeSheet(true));
+
+// 확인창. danger면 빨간 버튼. word를 주면 그 단어를 직접 입력해야 진행.
+function ask(title, html, okLabel = '확인', danger = false, word = '') {
+  return new Promise(res => {
+    const o = document.createElement('div'); o.className = 'overlay top';
+    o.innerHTML = `<div class="sheet mid" role="alertdialog"><h3>${esc(title)}</h3><div class="sub" style="margin:6px 0 4px;font-size:14px">${html}</div>
+      ${word ? `<input id="ask-word" placeholder="${esc(word)} 입력" autocomplete="off">` : ''}
+      <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" data-a="no">취소</button><button class="btn ${danger ? 'bad' : 'pri'}" data-a="ok">${esc(okLabel)}</button></div></div>`;
+    document.body.appendChild(o);
+    const done = v => { o.remove(); res(v); };
+    o.addEventListener('click', e => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'no' || e.target === o) done(false);
+      if (a === 'ok') { if (word && $('#ask-word', o).value.trim() !== word) { toast('입력이 달라 취소했어요.'); return done(false); } done(true); }
+    });
+  });
+}
+
+const relOpts = (sel, blank) => (blank ? `<option value="">${blank}</option>` : '') + C.REL.map(r => `<option${r === sel ? ' selected' : ''}>${r}</option>`).join('');
+const optList = (arr, sel) => arr.map(r => `<option${r === sel ? ' selected' : ''}>${esc(r)}</option>`).join('');
+const personName = id => (D.people.find(p => p.id === id) || {}).name || '';
+const peopleSorted = () => [...D.people].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+const yearOf = d => (d || '').slice(0, 4);
+const ddayText = n => n === 0 ? '오늘' : n > 0 ? `${n}일 후` : `${-n}일 지남`;
+
+/* ---------- 파일 입출력 ---------- */
+function download(name, text, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+const readFileText = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsText(f); });
+
+/* ============================================================
+   기록 종류별 목록·폼 (등록식: 종류를 추가하려면 REG에 한 덩어리를 더한다)
+   ============================================================ */
+const REG = {};
+
+/* ---------- 경조사 ---------- */
+REG.event = {
+  label: '경조사', store: 'events', fab: '경조사 추가',
+  summary() {
+    const years = [...new Set(D.events.map(e => yearOf(e.date)))].sort().reverse();
+    const y = ui.evYear && years.includes(ui.evYear) ? ui.evYear : '';
+    const list = D.events.filter(e => !y || yearOf(e.date) === y).sort((a, b) => b.date.localeCompare(a.date));
+    const t = C.sumEvents(list, { today: todayStr() });
+    const seg = `<div class="seg"><button data-act="ev-year" data-y=""${y ? '' : ' class="on"'}>전체</button>${years.map(v => `<button data-act="ev-year" data-y="${v}"${v === y ? ' class="on"' : ''}>${v}년</button>`).join('')}</div>`;
+    const sum = D.events.length ? `<div class="card"><div class="kv"><span>보낸 합계</span><b>${won(t.sent)}원 <span class="sub">(${t.countSent}건)</span></b></div>
+      <div class="kv"><span>받은 합계</span><b>${won(t.received)}원 <span class="sub">(${t.countReceived}건)</span></b></div>
+      <div class="kv"><span>차액</span><b>${balanceText(t.balance)}</b></div></div>` : '';
+    let html = (years.length ? seg : '') + sum;
+    if (!list.length) return html + '<div class="empty">경조사 기록이 없어요.<br>오른쪽 아래 + 버튼으로 추가하세요.</div>';
+    let cur = '';
+    html += '<div class="card" style="padding:4px 16px">';
+    for (const e of list) {
+      if (yearOf(e.date) !== cur) { cur = yearOf(e.date); html += `<div class="dayh">${cur}년</div>`; }
+      html += eventRow(e);
+    }
+    return html + '</div>';
+  },
+  form(e, preset = {}) {
+    const x = e || Object.assign({ date: todayStr(), personId: '', relation: '', kind: '결혼', direction: 'sent', amount: '', method: '현금', memo: '' }, preset);
+    return `<h3>${e ? '경조사 수정' : '경조사 추가'}</h3>
+      <label class="f">날짜<input type="date" name="date" value="${esc(x.date)}" required></label>
+      <label class="f">사람<select name="personId" id="f-person"><option value="">선택하세요</option>${peopleSorted().map(p => `<option value="${esc(p.id)}"${p.id === x.personId ? ' selected' : ''}>${esc(p.name)}${p.relation ? ' (' + esc(p.relation) + ')' : ''}</option>`).join('')}<option value="__new">+ 새 사람 추가</option></select></label>
+      <div id="newp" hidden><label class="f">새 사람 이름<input name="newName" autocomplete="off"></label></div>
+      <div class="grid2"><label class="f">관계<select name="relation" id="f-rel">${relOpts(x.relation, '(미지정)')}</select></label>
+      <label class="f">행사<input name="kind" list="kinds" value="${esc(x.kind)}" autocomplete="off"></label></div>
+      <datalist id="kinds">${C.KINDS.map(k => `<option value="${k}">`).join('')}</datalist>
+      <div class="grid2"><label class="f">방향<select name="direction"><option value="sent"${x.direction !== 'received' ? ' selected' : ''}>보냄</option><option value="received"${x.direction === 'received' ? ' selected' : ''}>받음</option></select></label>
+      <label class="f">방식<select name="method">${optList(C.WAYS, x.method)}</select></label></div>
+      <label class="f">금액 (원)<input name="amount" inputmode="numeric" placeholder="예: 100000" value="${esc(x.amount)}" autocomplete="off"></label>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  wire(root) {
+    const sel = $('#f-person', root);
+    const sync = () => {
+      $('#newp', root).hidden = sel.value !== '__new';
+      const p = D.people.find(p => p.id === sel.value);
+      if (p && p.relation) $('#f-rel', root).value = p.relation;
+    };
+    sel.addEventListener('change', sync); sync();
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.date) return '날짜를 입력해 주세요.';
+    let personId = v.personId;
+    if (!personId) return '사람을 선택하거나 새로 추가해 주세요.';
+    const amount = v.amount.trim() === '' ? 0 : num(v.amount);
+    if (amount < 0) return '금액은 0 이상이어야 해요.';
+    if (personId === '__new') {
+      const name = (v.newName || '').trim();
+      if (!name) return '새 사람의 이름을 입력해 주세요.';
+      const p = { id: uid(), name, relation: v.relation || '', birthday: '', memo: '' };
+      await put('people', p); personId = p.id;
+    }
+    return { id: old ? old.id : uid(), date: v.date, personId, relation: v.relation || '', kind: v.kind.trim() || '기타', direction: v.direction === 'received' ? 'received' : 'sent', amount, method: v.method, memo: v.memo.trim() };
+  },
+  del: e => `${esc(personName(e.personId))} ${esc(e.kind)} (${e.date}) 기록을 삭제할까요?`
+};
+const balanceText = b => b === 0 ? '0원' : b > 0 ? `<span class="pos">받은 게 ${won(b)}원 더 많음</span>` : `<span class="neg">보낸 게 ${won(-b)}원 더 많음</span>`;
+function eventRow(e) {
+  const fut = e.date > todayStr();
+  return `<div class="li" data-act="edit" data-t="event" data-id="${esc(e.id)}"><div class="l"><b>${esc(personName(e.personId) || '(삭제된 사람)')} · ${esc(e.kind)}</b>
+    <span class="sub">${esc(e.date)}${e.relation ? ' · ' + esc(e.relation) : ''}${e.method ? ' · ' + esc(e.method) : ''}${fut ? ' <span class="badge warn">예정</span>' : ''}</span></div>
+    <div class="r"><span class="badge ${e.direction === 'received' ? 'good' : ''}">${e.direction === 'received' ? '받음' : '보냄'}</span><br><b>${won(e.amount)}원</b></div></div>`;
+}
+
+/* ---------- 구매 물품 ---------- */
+const ITEM_CATS = ['가전', '디지털', '가구', '생활', '의류', '식품', '건강', '기타'];
+// 영수증 사진: 긴 변 1280px JPEG로 줄여 data URL로 보관 (원본은 저장하지 않음)
+async function shrinkPhoto(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) {
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+  }
+  const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, k = Math.min(1, 1280 / Math.max(w, h));
+  const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+  if (bmp.close) bmp.close();
+  return cv.toDataURL('image/jpeg', 0.8);
+}
+function warrantyBadge(i) {
+  if (!i.warrantyEnd) return '';
+  const d = dayDiff(todayStr(), i.warrantyEnd);
+  if (d < 0) return '<span class="badge">보증 종료</span>';
+  if (d <= 30) return `<span class="badge warn">보증 ${d === 0 ? '오늘 만료' : 'D-' + d}</span>`;
+  return `<span class="sub">보증 ~${esc(i.warrantyEnd)}</span>`;
+}
+REG.item = {
+  label: '물품', store: 'items', fab: '물품 추가',
+  summary() {
+    const years = [...new Set(D.items.map(i => yearOf(i.date)).filter(Boolean))].sort().reverse();
+    const y = ui.itYear && years.includes(ui.itYear) ? ui.itYear : '';
+    const list = D.items.filter(i => !y || yearOf(i.date) === y).sort((a, b) => b.date.localeCompare(a.date));
+    const sp = C.itemSpend(list), max = sp.byCategory[0] ? sp.byCategory[0].total || 1 : 1;
+    let html = years.length ? `<div class="seg"><button data-act="it-year" data-y=""${y ? '' : ' class="on"'}>전체</button>${years.map(v => `<button data-act="it-year" data-y="${v}"${v === y ? ' class="on"' : ''}>${v}년</button>`).join('')}</div>` : '';
+    if (!list.length) return html + '<div class="empty">구매 물품 기록이 없어요.<br>오른쪽 아래 + 버튼으로 추가하세요.</div>';
+    html += `<div class="card"><div class="kv"><span>${y ? y + '년 ' : ''}지출 합계</span><b>${won(sp.total)}원 <span class="sub">(${sp.count}건)</span></b></div>
+      ${sp.byCategory.map(c => `<div style="margin-top:8px"><div class="kv" style="border:0;padding:0"><span class="sub">${esc(c.category)} · ${c.count}건</span><span class="sub num">${won(c.total)}원</span></div><div class="bar"><i style="width:${Math.max(2, Math.round(c.total / max * 100))}%"></i></div></div>`).join('')}</div>`;
+    return html + '<div class="card" style="padding:4px 16px">' + list.map(i => `<div class="li" data-act="edit" data-t="item" data-id="${esc(i.id)}"><div class="l"><b>${esc(i.name)}${i.photo ? ' 📷' : ''}</b>
+      <span class="sub">${esc(i.date)}${i.store ? ' · ' + esc(i.store) : ''}${i.cardName ? ' · ' + esc(i.cardName) : ''}</span></div><div class="r"><b>${won(i.price)}원</b><br>${warrantyBadge(i)}</div></div>`).join('') + '</div>';
+  },
+  form(i) {
+    const x = i || { name: '', date: todayStr(), price: '', category: '', store: '', cardId: '', cardName: '', warrantyEnd: '', asContact: '', photo: '', memo: '' };
+    const cards = [...D.cards].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    const orphan = x.cardName && !cards.some(c => c.id === x.cardId);
+    const cats = [...new Set([...ITEM_CATS, ...D.items.map(t => t.category).filter(Boolean)])];
+    return `<h3>${i ? '물품 수정' : '물품 추가'}</h3>
+      <label class="f">품명<input name="name" value="${esc(x.name)}" required autocomplete="off"></label>
+      <div class="grid2"><label class="f">구매일<input type="date" name="date" value="${esc(x.date)}" required></label>
+      <label class="f">가격 (원)<input name="price" inputmode="numeric" value="${esc(x.price)}" autocomplete="off"></label></div>
+      <div class="grid2"><label class="f">카테고리<input name="category" list="icats" value="${esc(x.category)}" autocomplete="off"></label>
+      <label class="f">구매처<input name="store" value="${esc(x.store)}" autocomplete="off"></label></div>
+      <datalist id="icats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      <label class="f">결제카드<select name="cardId"><option value="">(선택 안 함)</option>${cards.map(c => `<option value="${esc(c.id)}"${c.id === x.cardId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}${orphan ? `<option value="__keep" selected>${esc(x.cardName)} (삭제된 카드)</option>` : ''}</select></label>
+      <div class="grid2"><label class="f">보증 만료일<input type="date" name="warrantyEnd" value="${esc(x.warrantyEnd)}"></label>
+      <label class="f">A/S 연락처<input name="asContact" value="${esc(x.asContact)}" autocomplete="off"></label></div>
+      <label class="f">영수증 사진<input type="file" id="f-photo" accept="image/*"></label>
+      <div id="photo-box">${x.photo ? `<img class="thumb" src="${x.photo}" alt="영수증">` : ''}</div>
+      <button type="button" class="btn sm" id="photo-rm" style="margin-top:6px"${x.photo ? '' : ' hidden'}>사진 지우기</button>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  wire(root, old) {
+    const f = $('#f', root); f._photo = old ? old.photo : '';
+    const box = $('#photo-box', root), rm = $('#photo-rm', root);
+    $('#f-photo', root).addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try { f._photo = await shrinkPhoto(file); box.innerHTML = `<img class="thumb" src="${f._photo}" alt="영수증">`; rm.hidden = false; }
+      catch (err) { toast('사진을 읽지 못했어요.'); }
+    });
+    rm.addEventListener('click', () => { f._photo = ''; box.innerHTML = ''; $('#f-photo', root).value = ''; rm.hidden = true; });
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.name.trim()) return '품명을 입력해 주세요.';
+    if (!v.date) return '구매일을 입력해 주세요.';
+    const price = v.price.trim() === '' ? 0 : num(v.price);
+    if (price < 0) return '가격은 0 이상이어야 해요.';
+    const card = D.cards.find(c => c.id === v.cardId);
+    const keep = v.cardId === '__keep' && old;
+    return { id: old ? old.id : uid(), name: v.name.trim(), date: v.date, price, category: v.category.trim(), store: v.store.trim(),
+      cardId: card ? card.id : keep ? old.cardId : '', cardName: card ? card.name : keep ? old.cardName : '',
+      warrantyEnd: v.warrantyEnd || '', asContact: v.asContact.trim(), photo: f._photo || '', memo: v.memo.trim() };
+  },
+  del: i => `${esc(i.name)} 물품을 삭제할까요?`
+};
+
+/* ---------- 카드 ---------- */
+REG.card = {
+  label: '카드', store: 'cards', fab: '카드 추가',
+  summary() {
+    if (!D.cards.length) return '<div class="empty">등록된 카드가 없어요.<br>+ 버튼으로 추가하거나, 설정에서 재무 대시보드 백업을 가져오세요.</div>';
+    const list = [...D.cards].sort((a, b) => (a.renewMonth || 13) - (b.renewMonth || 13) || a.name.localeCompare(b.name, 'ko'));
+    const total = D.cards.reduce((s, c) => s + num(c.fee), 0), soon = new Set(C.alerts(D, todayStr()).filter(a => a.kind === 'card').map(a => a.id));
+    return `<div class="card"><div class="kv"><span>카드 ${D.cards.length}장 · 연회비 합계(연)</span><b>${won(total)}원</b></div></div>
+      <div class="card" style="padding:4px 16px">${list.map(c => `<div class="li" data-act="edit" data-t="card" data-id="${esc(c.id)}"><div class="l"><b>${esc(c.name)}</b>
+      <span class="sub">${c.renewMonth ? '갱신 ' + c.renewMonth + '월' : '갱신월 미입력'}${c.memo ? ' · ' + esc(c.memo.split('\n')[0]) : ''}</span></div>
+      <div class="r"><b>${c.fee ? won(c.fee) + '원' : '연회비 없음'}</b>${soon.has(c.id) ? '<br><span class="badge warn">갱신 임박</span>' : ''}</div></div>`).join('')}</div>`;
+  },
+  form(c) {
+    const x = c || { name: '', fee: '', renewMonth: '', memo: '' };
+    return `<h3>${c ? '카드 수정' : '카드 추가'}</h3>
+      <label class="f">카드명<input name="name" value="${esc(x.name)}" required autocomplete="off"></label>
+      <div class="grid2"><label class="f">연회비 (원)<input name="fee" inputmode="numeric" value="${esc(x.fee)}" autocomplete="off"></label>
+      <label class="f">갱신월<select name="renewMonth"><option value="">(모름)</option>${Array.from({ length: 12 }, (_, k) => `<option value="${k + 1}"${+x.renewMonth === k + 1 ? ' selected' : ''}>${k + 1}월</option>`).join('')}</select></label></div>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.name.trim()) return '카드명을 입력해 주세요.';
+    const fee = v.fee.trim() === '' ? 0 : num(v.fee);
+    if (fee < 0) return '연회비는 0 이상이어야 해요.';
+    return { id: old ? old.id : uid(), name: v.name.trim(), fee, renewMonth: v.renewMonth ? +v.renewMonth : '', memo: v.memo.trim() };
+  },
+  del: c => `${esc(c.name)} 카드를 삭제할까요?<br>이 카드로 결제한 물품 기록에는 카드 이름이 그대로 남아요.`
+};
+
+/* ---------- 메모·생각 ---------- */
+const parseTags = s => [...new Set(String(s || '').split(/[\s,]+/).map(t => t.replace(/^#+/, '').trim()).filter(Boolean))];
+REG.memo = {
+  label: '메모', store: 'memos', fab: '메모 추가',
+  summary() {
+    const tagCount = {}; D.memos.forEach(m => (m.tags || []).forEach(t => tagCount[t] = (tagCount[t] || 0) + 1));
+    const tags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a] || a.localeCompare(b, 'ko'));
+    const tag = tags.includes(ui.memoTag) ? ui.memoTag : '';
+    const list = D.memos.filter(m => !tag || (m.tags || []).includes(tag)).sort((a, b) => b.date.localeCompare(a.date));
+    let html = tags.length ? `<div class="seg"><button data-act="memo-tag" data-tag=""${tag ? '' : ' class="on"'}>전체</button>${tags.map(t => `<button data-act="memo-tag" data-tag="${esc(t)}"${t === tag ? ' class="on"' : ''}>#${esc(t)} ${tagCount[t]}</button>`).join('')}</div>` : '';
+    if (!list.length) return html + '<div class="empty">메모가 없어요.<br>오른쪽 아래 + 버튼으로 추가하세요.</div>';
+    return html + list.map(m => memoCard(m)).join('');
+  },
+  form(m, preset = {}) {
+    const x = m || Object.assign({ date: todayStr(), title: '', body: '', tags: [], personId: '' }, preset);
+    return `<h3>${m ? '메모 수정' : '메모 추가'}</h3>
+      <label class="f">날짜<input type="date" name="date" value="${esc(x.date)}" required></label>
+      <label class="f">제목<input name="title" value="${esc(x.title)}" autocomplete="off"></label>
+      <label class="f">내용<textarea name="body">${esc(x.body)}</textarea></label>
+      <label class="f">태그 (띄어쓰기로 구분, 예: 아이디어 여행)<input name="tags" value="${esc((x.tags || []).map(t => '#' + t).join(' '))}" autocomplete="off"></label>
+      <label class="f">관련 사람 (선택)<select name="personId"><option value="">(없음)</option>${peopleSorted().map(p => `<option value="${esc(p.id)}"${p.id === x.personId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>`;
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.title.trim() && !v.body.trim()) return '제목이나 내용을 입력해 주세요.';
+    return { id: old ? old.id : uid(), date: v.date || todayStr(), title: v.title.trim(), body: v.body.trim(), tags: parseTags(v.tags), personId: v.personId || '' };
+  },
+  del: m => `"${esc(m.title || m.body.slice(0, 20))}" 메모를 삭제할까요?`
+};
+function memoCard(m) {
+  return `<div class="card tap" data-act="edit" data-t="memo" data-id="${esc(m.id)}"><div class="head"><h3>${esc(m.title || m.body.split('\n')[0].slice(0, 30) || '(제목 없음)')}</h3><span class="sub">${esc(m.date)}</span></div>
+    ${m.title && m.body ? `<div class="sub" style="margin-top:4px;white-space:pre-wrap">${esc(m.body.length > 120 ? m.body.slice(0, 120) + '…' : m.body)}</div>` : ''}
+    <div class="tags">${m.personId ? `<span class="badge good">${esc(personName(m.personId))}</span>` : ''}${(m.tags || []).map(t => `<span class="badge">#${esc(t)}</span>`).join('')}</div></div>`;
+}
+
+/* ---------- 사람 ---------- */
+REG.person = {
+  label: '사람', store: 'people', fab: '사람 추가',
+  form(p) {
+    const x = p || { name: '', relation: '', birthday: '', memo: '' };
+    return `<h3>${p ? '사람 수정' : '사람 추가'}</h3>
+      <label class="f">이름<input name="name" value="${esc(x.name)}" required autocomplete="off"></label>
+      <label class="f">관계<select name="relation">${relOpts(x.relation, '(미지정)')}</select></label>
+      <label class="f">생일 (연도를 모르면 아무 연도나 입력)<input type="date" name="birthday" value="${esc(x.birthday)}"></label>
+      <label class="f">메모<textarea name="memo" style="min-height:70px">${esc(x.memo)}</textarea></label>`;
+  },
+  async collect(f, old) {
+    const v = Object.fromEntries(new FormData(f));
+    const name = v.name.trim();
+    if (!name) return '이름을 입력해 주세요.';
+    if (D.people.some(p => p.name === name && (!old || p.id !== old.id))) return '같은 이름이 이미 있어요. (예: "김철수(대학)"처럼 구분해 주세요)';
+    return { id: old ? old.id : uid(), name, relation: v.relation, birthday: v.birthday || '', memo: v.memo.trim() };
+  },
+  canDelete: p => D.events.some(e => e.personId === p.id) ? '이 사람의 경조사 기록이 있어 삭제할 수 없어요. 먼저 경조사 기록을 삭제하거나 다른 사람으로 바꿔 주세요.' : '',
+  del: p => `${esc(p.name)} 님을 삭제할까요?`
+};
+
+/* ============================================================
+   화면 상태 · 탭
+   ============================================================ */
+const ui = { tab: 'home', seg: 'event', evYear: '', itYear: '', memoTag: '', sq: '', sTypes: [], sFrom: '', sTo: '' };
+const ICON = {
+  home: '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+  list: '<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
+  people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18.5 14.5c2 .8 3 2.6 3 5.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
+};
+const TABS = [['home', '홈', 'home'], ['records', '기록', 'list'], ['people', '사람', 'people'], ['search', '검색', 'search'], ['settings', '설정', 'gear']];
+
+const getAlerts = () => C.alerts(D, todayStr());
+function backupDue() {
+  if (!STORES.some(s => D[s].length)) return null;
+  if (META.snoozeUntil && META.snoozeUntil > todayStr()) return null;
+  const base = META.lastBackup || META.createdAt || todayStr();
+  const d = dayDiff(base, todayStr());
+  return d >= 30 ? { days: d, never: !META.lastBackup } : null;
+}
+
+/* ---------- 홈 ---------- */
+function viewHome() {
+  const al = getAlerts(), today = todayStr();
+  const ev = al.filter(a => a.kind === 'event'), bd = al.filter(a => a.kind === 'birthday'), wr = al.filter(a => a.kind === 'warranty'), cd = al.filter(a => a.kind === 'card');
+  let html = '';
+  html += `<div class="row" style="margin-top:4px"><button class="btn pri" data-act="go-add" data-t="event">+ 경조사</button><button class="btn pri" data-act="go-add" data-t="item">+ 물품</button><button class="btn pri" data-act="go-add" data-t="memo">+ 메모</button></div>`;
+  if (wr.length) html += `<h2>보증 만료 임박</h2>` + wr.map(a => `<div class="card tap hl" data-act="edit" data-t="item" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${a.days === 0 ? '오늘 만료' : 'D-' + a.days}</span></div><div class="sub">보증 만료 ${esc(a.date)}${a.sub ? ' · A/S ' + esc(a.sub) : ''}</div></div>`).join('');
+  if (cd.length) html += `<h2>연회비 갱신</h2>` + cd.map(a => `<div class="card tap hl" data-act="edit" data-t="card" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${a.monthsAhead === 0 ? '이번 달' : '다음 달'}</span></div><div class="sub">${a.month}월 갱신${a.fee ? ' · 연회비 ' + won(a.fee) + '원' : ''}</div></div>`).join('');
+  if (ev.length) html += `<h2>다가오는 경조사</h2>` + ev.map(a => `<div class="card tap hl" data-act="edit" data-t="event" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge warn">${ddayText(a.days)}</span></div><div class="sub">${esc(a.date)} · ${a.direction === 'received' ? '받음' : '보냄'} ${won(a.amount)}원</div></div>`).join('');
+  if (bd.length) html += `<h2>다가오는 생일</h2>` + bd.map(a => `<div class="card tap" data-act="person" data-id="${esc(a.id)}"><div class="head"><h3>${esc(a.title)}</h3><span class="badge">${ddayText(a.days)}</span></div><div class="sub">${esc(a.date.slice(5))}</div></div>`).join('');
+  const recent = [...D.events].sort((a, b) => b.date.localeCompare(a.date)).filter(e => e.date <= today).slice(0, 5);
+  if (recent.length) html += `<h2>최근 경조사</h2><div class="card" style="padding:4px 16px">${recent.map(eventRow).join('')}</div>`;
+  if (!STORES.some(k => D[k].length)) html += `<div class="card" style="margin-top:14px"><h3>시작하기</h3><div class="sub" style="margin-top:6px">① 위의 버튼으로 경조사·구매 물품·메모를 기록하세요. 사람은 경조사 입력 때 같이 추가돼요.<br>② <b>사람</b> 탭에서 사람별 주고받은 합계를, <b>검색</b> 탭에서 모든 기록을 한 번에 찾을 수 있어요.<br>③ 보증 만료·연회비 갱신이 가까워지면 이 화면에 알려드려요.<br>④ 가끔 <b>설정</b>에서 백업 파일을 내려받아 보관하세요.</div></div>`;
+  return html;
+}
+
+/* ---------- 기록 ---------- */
+const SEGS = ['event', 'item', 'card', 'memo'];
+function viewRecords() {
+  const R = REG[ui.seg];
+  const seg = SEGS.length > 1 ? `<div class="seg">${SEGS.map(k => `<button data-act="seg" data-k="${k}"${k === ui.seg ? ' class="on"' : ''}>${REG[k].label}</button>`).join('')}</div>` : '';
+  return seg + R.summary();
+}
+
+/* ---------- 사람 ---------- */
+function viewPeople() {
+  if (!D.people.length) return '<div class="empty">등록된 사람이 없어요.<br>오른쪽 아래 + 버튼 또는 경조사 입력 때 추가하세요.</div>';
+  const today = todayStr();
+  return '<div class="card" style="padding:4px 16px">' + peopleSorted().map(p => {
+    const t = C.personTotals(D.events, p.id, today);
+    return `<div class="li" data-act="person" data-id="${esc(p.id)}"><div class="l"><b>${esc(p.name)}</b><span class="sub">${esc(p.relation || '관계 미지정')}${p.birthday ? ' · 생일 ' + esc(p.birthday.slice(5)) : ''}</span></div>
+      <div class="r sub">${t.count ? `보냄 ${won(t.sent)}<br>받음 ${won(t.received)}` : '기록 없음'}</div></div>`;
+  }).join('') + '</div>';
+}
+function personSheet(id) {
+  const p = D.people.find(x => x.id === id); if (!p) return;
+  const t = C.personTotals(D.events, id, todayStr());
+  const evs = D.events.filter(e => e.personId === id).sort((a, b) => b.date.localeCompare(a.date));
+  openSheet(`<div class="head"><h3>${esc(p.name)}</h3><span class="sub">${esc(p.relation || '')}${p.birthday ? ' · 생일 ' + esc(p.birthday.slice(5)) : ''}</span></div>
+    ${p.memo ? `<div class="sub" style="white-space:pre-wrap;margin-top:4px">${esc(p.memo)}</div>` : ''}
+    <div class="card"><div class="kv"><span>보낸 합계</span><b>${won(t.sent)}원 <span class="sub">(${t.countSent}건)</span></b></div>
+    <div class="kv"><span>받은 합계</span><b>${won(t.received)}원 <span class="sub">(${t.countReceived}건)</span></b></div>
+    <div class="kv"><span>차액</span><b>${balanceText(t.balance)}</b></div></div>
+    <h2 style="margin-top:16px">경조사 기록</h2>
+    ${evs.length ? `<div class="card" style="padding:4px 16px">${evs.map(eventRow).join('')}</div>` : '<div class="sub">기록이 없어요.</div>'}
+    ${D.memos.some(m => m.personId === id) ? `<h2>관련 메모</h2>${D.memos.filter(m => m.personId === id).sort((a, b) => b.date.localeCompare(a.date)).map(memoCard).join('')}` : ''}
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="add" data-t="event" data-person="${esc(id)}">+ 경조사</button><button class="btn" data-act="edit" data-t="person" data-id="${esc(id)}">수정</button><button class="btn" data-act="close">닫기</button></div>`);
+}
+
+/* ---------- 검색 ---------- */
+const STYPE = [['event', '경조사'], ['item', '물품'], ['card', '카드'], ['memo', '메모'], ['person', '사람']];
+const TYPE_LABEL = Object.fromEntries(STYPE);
+function viewSearch() {
+  const per = !ui.sFrom && !ui.sTo ? 'all' : ui.sFrom && ui.sFrom.endsWith('-01-01') && ui.sFrom.slice(0, 4) === ui.sTo.slice(0, 4) && ui.sTo.endsWith('-12-31') ? (+ui.sFrom.slice(0, 4) === new Date().getFullYear() ? 'this' : +ui.sFrom.slice(0, 4) === new Date().getFullYear() - 1 ? 'last' : '') : '';
+  return `<input id="sq" type="search" placeholder="이름, 품명, 메모 내용 등 무엇이든" value="${esc(ui.sq)}" autocomplete="off" enterkeyhint="search">
+    <div class="seg" style="margin-top:8px"><button data-act="s-type" data-k=""${ui.sTypes.length ? '' : ' class="on"'}>전체</button>${STYPE.map(([k, l]) => `<button data-act="s-type" data-k="${k}"${ui.sTypes.includes(k) ? ' class="on"' : ''}>${l}</button>`).join('')}</div>
+    <div class="seg"><button data-act="s-per" data-p="all"${per === 'all' ? ' class="on"' : ''}>전체 기간</button><button data-act="s-per" data-p="this"${per === 'this' ? ' class="on"' : ''}>올해</button><button data-act="s-per" data-p="last"${per === 'last' ? ' class="on"' : ''}>작년</button></div>
+    <div class="grid2"><label class="f" style="margin-top:0">시작일<input type="date" id="sfrom" value="${esc(ui.sFrom)}"></label><label class="f" style="margin-top:0">종료일<input type="date" id="sto" value="${esc(ui.sTo)}"></label></div>
+    <div id="sres"></div>`;
+}
+function renderSearchResults() {
+  const box = $('#sres'); if (!box) return;
+  const hasFilter = ui.sq.trim() || ui.sTypes.length || ui.sFrom || ui.sTo;
+  if (!hasFilter) { box.innerHTML = '<div class="empty">검색어를 입력하거나 종류·기간을 골라 보세요.</div>'; return; }
+  const res = C.searchRecords(D, { q: ui.sq, types: ui.sTypes, from: ui.sFrom, to: ui.sTo });
+  if (!res.length) { box.innerHTML = '<div class="empty">찾는 기록이 없어요.</div>'; return; }
+  const ev = res.filter(r => r.type === 'event' && r.date <= todayStr());
+  const sum = ui.sq.trim() || ui.sFrom || ui.sTo ? (() => { const t = C.sumEvents(D.events.filter(e => ev.some(r => r.id === e.id))); return t.count ? `<div class="card"><div class="sub">검색된 경조사 ${t.count}건 합계</div><div class="kv"><span>보낸</span><b>${won(t.sent)}원</b></div><div class="kv"><span>받은</span><b>${won(t.received)}원</b></div></div>` : ''; })() : '';
+  box.innerHTML = `<div class="sub" style="margin:10px 0 0">${res.length}건${res.length > 100 ? ' (상위 100건 표시)' : ''}</div>${sum}<div class="card" style="padding:4px 16px">${res.slice(0, 100).map(r => `<div class="li" data-act="hit" data-t="${r.type}" data-id="${esc(r.id)}"><div class="l"><b>${esc(r.title)}</b><span class="sub">${esc(r.sub)}</span></div><div class="r"><span class="badge">${TYPE_LABEL[r.type]}</span>${r.date ? `<br><span class="sub">${esc(r.date)}</span>` : ''}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- 설정 ---------- */
+let installEvt = null, swReady = false, swFail = '';
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const offlineState = () => swReady ? '준비됨 ✓' : swFail ? esc(swFail) : '준비 중… (처음 한 번은 인터넷 연결 필요)';
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (ui.tab === 'settings') render(); });
+function viewSettings() {
+  const due = backupDue();
+  const last = META.lastBackup ? `${META.lastBackup} (${dayDiff(META.lastBackup, todayStr())}일 전)` : '아직 없음';
+  return `<h2>백업</h2>
+    <div class="card"><div class="sub">브라우저 데이터를 지우거나 폰을 바꾸면 기록이 사라져요. 한 달에 한 번 백업 파일을 내려받아 보관하세요.<br>백업 파일에는 개인 정보가 들어 있으니 공개 저장소에 올리지 마세요.</div>
+      <div class="kv" style="margin-top:8px"><span>마지막 백업</span><b${due ? ' class="neg"' : ''}>${last}</b></div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" data-act="backup-out">백업 내보내기</button><button class="btn" data-act="backup-in">백업 가져오기</button></div>
+      <input type="file" id="backup-file" accept=".json,application/json" hidden></div>
+    <h2>재무 대시보드에서 카드 가져오기</h2>
+    <div class="card"><div class="sub">재무 대시보드(<code>finance/</code>)에서 내려받은 백업 파일(.json)을 고르면, 거래·구독에 쓰인 결제수단 이름을 카드 후보로 보여드려요. 고른 것만 카드 기록에 <b>추가</b>되고 기존 기록은 지워지지 않아요.</div>
+      <button class="btn block" data-act="fin-in">재무 대시보드 백업 가져오기</button>
+      <input type="file" id="fin-file" accept=".json,application/json" hidden></div>
+    <h2>앱 설치 · 오프라인</h2>
+    <div class="card"><div class="kv"><span>오프라인 사용</span><b>${offlineState()}</b></div>
+      <div class="kv"><span>홈 화면 설치</span><b>${isStandalone() ? '설치됨' : '아직'}</b></div>
+      ${isStandalone() ? '' : `<div class="sub" style="margin-top:8px">Chrome 오른쪽 위 메뉴(⋮) → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 앱처럼 쓸 수 있어요.</div>${installEvt ? '<button class="btn pri block" data-act="install">홈 화면에 설치</button>' : ''}`}</div>
+    <h2>데이터 현황</h2>
+    <div class="card">${STORES.map(k => `<div class="kv"><span>${REG_LABEL[k]}</span><b>${D[k].length}${k === 'people' ? '명' : '건'}</b></div>`).join('')}</div>
+    <h2>전체 삭제</h2>
+    <div class="card"><div class="sub">이 브라우저에 저장된 모든 기록을 지웁니다. 되돌릴 수 없어요.</div><button class="btn bad block" data-act="wipe">전체 삭제</button></div>
+    <div class="disc">저장 위치: 이 폰의 브라우저(IndexedDB). 서버로 전송되는 데이터는 없습니다.</div>`;
+}
+
+/* ============================================================
+   백업
+   ============================================================ */
+function exportBackup() {
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  const data = { app: 'life', schema: 1, exportedAt: d.toISOString() };
+  STORES.forEach(s => data[s] = D[s]);
+  download(`life-backup-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`, JSON.stringify(data));
+  setMeta('lastBackup', todayStr()); setMeta('snoozeUntil', '');
+  toast('백업 파일을 내려받았어요.'); render();
+}
+async function importBackup(file) {
+  let obj;
+  try { obj = JSON.parse(await readFileText(file)); } catch (e) { toast('JSON 파일을 읽지 못했어요.'); return; }
+  if (!obj || obj.app !== 'life' || obj.schema !== 1 || !Array.isArray(obj.events) || !Array.isArray(obj.people)) { toast('이 앱의 백업 파일이 아니에요.'); return; }
+  const data = {}; STORES.forEach(s => data[s] = Array.isArray(obj[s]) ? obj[s].filter(r => r && typeof r === 'object' && r.id) : []);
+  if (!await ask('백업 가져오기', `현재 데이터를 백업 내용으로 <b>덮어씁니다</b>.<br>${STORES.map(s => `${REG_LABEL[s]} ${data[s].length}`).join(' · ')}`, '덮어쓰기', true)) return;
+  try { await replaceAll(data); } catch (e) { toast('가져오기에 실패했어요. 기존 데이터는 그대로예요.'); return; }
+  await setMeta('lastBackup', todayStr());
+  render(); toast('백업을 가져왔어요.');
+}
+/* ---------- 재무 대시보드 백업 → 카드 후보 ---------- */
+// finance/index.html 백업 형식: { schema:1, transactions:[{method,type,...}], subscriptions:[{method,...}], ... } (결제수단 = method)
+const NOT_CARD_RE = /계좌|통장|예금|적금|현금|입출금|증권|보험|대출|청약/;
+const nameKey = n => String(n).replace(/\s+/g, '').toLowerCase();
+let finCands = [];
+async function importFinance(file) {
+  let obj;
+  try { obj = JSON.parse(await readFileText(file)); } catch (e) { toast('JSON 파일을 읽지 못했어요.'); return; }
+  if (!obj || typeof obj !== 'object' || obj.schema !== 1 || !Array.isArray(obj.transactions) || !Array.isArray(obj.subscriptions)) { toast('재무 대시보드의 백업 파일이 아니에요.'); return; }
+  const m = new Map();
+  const add = (name, kind, exp) => { name = String(name || '').trim(); if (!name) return; const k = nameKey(name), x = m.get(k) || { name, tx: 0, sub: 0, exp: 0 }; x[kind]++; if (exp) x.exp++; m.set(k, x); };
+  obj.transactions.forEach(t => add(t && t.method, 'tx', t && t.type === 'expense'));
+  obj.subscriptions.forEach(t => add(t && t.method, 'sub', true));
+  const have = new Set(D.cards.map(c => nameKey(c.name)));
+  finCands = [...m.entries()].map(([k, x]) => ({ ...x, key: k, exists: have.has(k) })).sort((a, b) => (b.tx + b.sub) - (a.tx + a.sub));
+  if (!finCands.length) { toast('가져올 결제수단 이름이 없어요.'); return; }
+  openSheet(`<h3>카드로 가져올 항목 선택</h3><div class="sub">백업 파일의 결제수단 ${finCands.length}개예요. 지출에 쓰인 결제수단은 미리 체크해 두었어요. <b>카드가 아닌 것(계좌·현금 등)은 체크를 빼 주세요.</b> 연회비·갱신월은 가져온 뒤 카드 화면에서 입력하세요.</div>
+    <div class="card" style="padding:4px 16px">${finCands.map((c, i) => `<label class="chk li" style="cursor:pointer;margin:0"><span style="display:flex;gap:10px;align-items:center;min-width:0"><input type="checkbox" data-fin="${i}"${c.exists ? ' disabled' : c.exp && !NOT_CARD_RE.test(c.name) ? ' checked' : ''}><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</b><span class="sub">거래 ${c.tx}건 · 구독 ${c.sub}개</span></span></span>${c.exists ? '<span class="badge">이미 있음</span>' : ''}</label>`).join('')}</div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="fin-add">선택한 항목 카드로 추가</button><button class="btn" data-act="close">취소</button></div>`);
+}
+
+const REG_LABEL = { people: '사람', events: '경조사', items: '물품', cards: '카드', memos: '메모' };
+
+/* ============================================================
+   렌더 · 이벤트
+   ============================================================ */
+function render() {
+  const al = getAlerts();
+  const n = al.length + (backupDue() ? 1 : 0);
+  $('#tabs').innerHTML = TABS.map(([k, label, ic]) => `<button data-act="tab" data-k="${k}"${k === ui.tab ? ' class="on"' : ''} aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[ic]}</svg>${label}${k === 'home' && n ? `<span class="dot">${n}</span>` : ''}</button>`).join('');
+  const titles = { home: '라이프 기록', records: '기록', people: '사람', search: '검색', settings: '설정' };
+  $('#title').textContent = titles[ui.tab];
+  const due = backupDue();
+  $('#banner').innerHTML = (storageProblem ? `<div class="banner bad">${esc(storageProblem)}</div>` : '') + (saveFailed ? '<div class="banner bad">마지막 저장에 실패했어요. 설정에서 백업을 내려받아 두세요.</div>' : '')
+    + (due ? `<div class="banner">${due.never ? '아직 백업한 적이 없어요.' : `마지막 백업이 ${due.days}일 전이에요.`} 한 달에 한 번은 백업해 두세요.<div class="row"><button class="btn sm pri" data-act="backup-out">지금 백업</button><button class="btn sm" data-act="snooze">일주일 뒤에 알림</button></div></div>` : '');
+  const v = { home: viewHome, records: viewRecords, people: viewPeople, search: viewSearch, settings: viewSettings }[ui.tab];
+  $('#view').innerHTML = v();
+  const fab = $('#fab');
+  fab.hidden = !(ui.tab === 'records' || ui.tab === 'people');
+  if (ui.tab === 'search') renderSearchResults();
+}
+
+function openForm(type, id, preset) {
+  const R = REG[type], old = id ? D[R.store].find(x => x.id === id) : null;
+  if (id && !old) return;
+  const root = openSheet(`<form id="f" novalidate>${R.form(old, preset)}
+    <div class="row" style="margin-top:16px"><button class="btn pri" type="submit">저장</button><button class="btn" type="button" data-act="close">취소</button>${old ? '<button class="btn bad" type="button" data-act="del-rec" style="margin-left:auto">삭제</button>' : ''}</div></form>`);
+  const f = $('#f', root);
+  if (R.wire) R.wire(root, old);
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const rec = await R.collect(f, old);
+    if (typeof rec === 'string') { toast(rec); return; }
+    if (await put(R.store, rec)) { closeSheet(); render(); toast('저장했어요.'); }
+  });
+  f.querySelector('[data-act="del-rec"]')?.addEventListener('click', async () => {
+    const why = R.canDelete ? R.canDelete(old) : '';
+    if (why) { toast(why); return; }
+    if (!await ask('삭제', R.del(old), '삭제', true)) return;
+    if (await del(R.store, old.id)) { closeSheet(); render(); toast('삭제했어요.'); }
+  });
+}
+
+Object.assign(actions, {
+  tab: el => { ui.tab = el.dataset.k; render(); window.scrollTo(0, 0); },
+  seg: el => { ui.seg = el.dataset.k; render(); },
+  'ev-year': el => { ui.evYear = el.dataset.y; render(); },
+  fab: () => { if (ui.tab === 'people') openForm('person'); else openForm(ui.seg); },
+  'it-year': el => { ui.itYear = el.dataset.y; render(); },
+  'memo-tag': el => { ui.memoTag = el.dataset.tag; render(); },
+  's-type': el => { const t = el.dataset.k, a = ui.sTypes; if (!t) ui.sTypes = []; else ui.sTypes = a.includes(t) ? a.filter(x => x !== t) : [...a, t]; render(); },
+  's-per': el => { const y = new Date().getFullYear(), p = el.dataset.p; ui.sFrom = p === 'this' ? y + '-01-01' : p === 'last' ? (y - 1) + '-01-01' : ''; ui.sTo = p === 'this' ? y + '-12-31' : p === 'last' ? (y - 1) + '-12-31' : ''; render(); },
+  hit: el => { const t = el.dataset.t; if (t === 'person') personSheet(el.dataset.id); else openForm(t, el.dataset.id); },
+  'go-add': el => { ui.tab = 'records'; ui.seg = el.dataset.t; render(); openForm(el.dataset.t); },
+  add: el => openForm(el.dataset.t, null, el.dataset.person ? { personId: el.dataset.person } : undefined),
+  edit: el => openForm(el.dataset.t, el.dataset.id),
+  person: el => personSheet(el.dataset.id),
+  close: () => closeSheet(),
+  'backup-out': exportBackup,
+  'backup-in': () => $('#backup-file').click(),
+  'fin-in': () => $('#fin-file').click(),
+  'fin-add': async () => {
+    const picked = [...document.querySelectorAll('[data-fin]:checked')].map(b => finCands[+b.dataset.fin]);
+    if (!picked.length) { toast('추가할 항목을 선택해 주세요.'); return; }
+    for (const c of picked) await put('cards', { id: uid(), name: c.name, fee: 0, renewMonth: '', memo: '재무 대시보드에서 가져옴' });
+    closeSheet(); ui.tab = 'records'; ui.seg = 'card'; render(); toast(`카드 ${picked.length}장을 추가했어요.`);
+  },
+  install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { /* 무시 */ } installEvt = null; render(); },
+  snooze: () => { const d = new Date(Date.now() + 7 * 86400000); setMeta('snoozeUntil', fmtDate(d)); render(); toast('일주일 뒤에 다시 알려드릴게요.'); },
+  wipe: async () => {
+    if (!await ask('전체 삭제', '경조사, 사람 등 경조사·물품·카드·메모 등 모든 기록이 삭제됩니다.<br>먼저 백업을 내려받으셨나요?', '계속', true, '삭제')) return;
+    await replaceAll({}); await setMeta('lastBackup', ''); render(); toast('모두 삭제했어요.');
+  }
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el && actions[el.dataset.act]) actions[el.dataset.act](el, e);
+});
+document.addEventListener('input', e => { if (e.target.id === 'sq') { ui.sq = e.target.value; renderSearchResults(); } });
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'sfrom' || t.id === 'sto') { ui[t.id === 'sfrom' ? 'sFrom' : 'sTo'] = t.value; render(); }
+  if (t.id === 'fin-file' && t.files[0]) { importFinance(t.files[0]); t.value = ''; }
+  if (t.id === 'backup-file' && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
+});
+
+(async function init() {
+  await loadAll();
+  render();
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') { // 오프라인 사용 준비
+    navigator.serviceWorker.register('sw.js').catch(() => { swFail = '이 브라우저에서는 사용할 수 없어요'; });
+    navigator.serviceWorker.ready.then(() => { swReady = true; if (ui.tab === 'settings' && !sheetEl) render(); }).catch(() => {});
+  } else swFail = '이 브라우저에서는 사용할 수 없어요';
+})();
+</script>
+</body>
+</html>

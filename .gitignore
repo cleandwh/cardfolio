@@ -1,0 +1,5 @@
+# 개인 금융 파일 커밋 방지
+*.xlsx
+*.xls
+*.csv
+finance-backup*.json
